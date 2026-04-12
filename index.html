@@ -1632,20 +1632,14 @@ const POP_SOUNDS = [
 ];
 
 function initSoundPicker() {
-  const categories = [];
-  const seen = {};
-  POP_SOUNDS.forEach(s => { if(!seen[s.category]) { seen[s.category] = true; categories.push(s.category); } });
   let html = '';
-  categories.forEach(cat => {
-    html += `<div class="sound-category-label">${cat}</div>`;
-    POP_SOUNDS.filter(s => s.category === cat).forEach(s => {
-      const active = s.key === currentPopSound ? ' active' : '';
-      html += `<div class="sound-item${active}" data-key="${s.key}">
-        <span class="sound-item-name">${s.name}</span>
-        <span class="sound-item-desc">${s.desc}</span>
-        <button class="sound-play-btn" data-key="${s.key}" title="Preview">&#9654;</button>
-      </div>`;
-    });
+  POP_SOUNDS.forEach(s => {
+    const active = s.key === currentPopSound ? ' active' : '';
+    html += `<div class="sound-item${active}" data-key="${s.key}">
+      <span class="sound-item-name">${s.name}</span>
+      <span class="sound-item-desc">${s.desc}</span>
+      <button class="sound-play-btn" data-key="${s.key}" title="Preview">&#9654;</button>
+    </div>`;
   });
   soundList.innerHTML = html;
 }
