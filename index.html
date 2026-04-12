@@ -310,6 +310,124 @@
   }
   #menu-confirm-no:active { transform: scale(0.95); }
 
+  /* --- SOUND PICKER MODAL --- */
+  #sound-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  #sound-modal.open { display: flex; }
+
+  .sound-modal-content {
+    background: rgba(20,20,30,0.97);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 18px;
+    width: min(92vw, 460px);
+    max-width: min(92vw, 460px);
+    max-height: 82vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  }
+
+  .sound-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+  }
+
+  .sound-modal-header h3 {
+    color: #fff;
+    font-family: 'Limelight', cursive;
+    font-size: 20px;
+    margin: 0;
+    text-shadow: 0 0 10px rgba(255, 75, 43, 0.6);
+  }
+
+  #close-sound-btn {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    font-size: 18px; font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s;
+    outline: none;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  #close-sound-btn:hover { background: rgba(255,75,43,0.5); }
+
+  .sound-category-label {
+    color: rgba(255,255,255,0.35);
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 12px 4px;
+  }
+
+  .sound-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 4px 8px 10px;
+  }
+
+  .sound-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+    margin-bottom: 4px;
+  }
+  .sound-item:hover { background: rgba(255,255,255,0.08); }
+  .sound-item.active {
+    border-color: #ff4b2b;
+    background: rgba(255,75,43,0.15);
+  }
+
+  .sound-item-name {
+    flex: 1;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .sound-item.active .sound-item-name { color: #ff7055; }
+
+  .sound-item-desc {
+    color: #777;
+    font-size: 10px;
+    flex: 2;
+    line-height: 1.3;
+  }
+
+  .sound-play-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 50%;
+    width: 28px; height: 28px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .sound-play-btn:hover { background: rgba(255,75,43,0.4); }
+
 </style>
 </head>
 <body>
@@ -319,6 +437,7 @@
   <p id="overlay-msg">Drag and release anywhere to throw.</p>
   <button class="btn" id="main-btn">TAP TO PLAY</button>
   <button class="btn" id="theme-btn" style="background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 15px;">CHANGE THEME</button>
+  <button class="btn" id="sound-btn" style="background: linear-gradient(135deg, #11998e, #38ef7d); margin-top: 10px;">POP SOUND</button>
   <div class="copyright">&copy; Pollito Productions 2026</div>
 </div>
 
@@ -329,6 +448,16 @@
       <button id="menu-confirm-yes">Main Menu</button>
       <button id="menu-confirm-no">Keep Playing</button>
     </div>
+  </div>
+</div>
+
+<div id="sound-modal">
+  <div class="sound-modal-content">
+    <div class="sound-modal-header">
+      <h3>Pop Sound</h3>
+      <button id="close-sound-btn">&#x2715;</button>
+    </div>
+    <div class="sound-list" id="sound-list"></div>
   </div>
 </div>
 
@@ -412,6 +541,9 @@ const Sound = {
 
   pop: function() {
     if(!this.ctx || this.muted) return;
+    const key = typeof currentPopSound !== 'undefined' ? currentPopSound : 'balloon';
+    if(this.popSounds[key]) { this.popSounds[key](this.ctx, this.masterGain); return; }
+    // fallback
     const t = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -419,10 +551,201 @@ const Sound = {
     osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
     gain.gain.setValueAtTime(0.3, t);
     gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-    osc.connect(gain);
-    gain.connect(this.masterGain);
-    osc.start();
-    osc.stop(t + 0.15);
+    osc.connect(gain); gain.connect(this.masterGain);
+    osc.start(); osc.stop(t + 0.15);
+  },
+
+  popSounds: {
+    balloon: function(ctx, master) {
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.frequency.setValueAtTime(800, t);
+      osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+      osc.connect(gain); gain.connect(master); osc.start(); osc.stop(t + 0.15);
+    },
+    marimba: function(ctx, master) {
+      const t = ctx.currentTime;
+      // Fundamental
+      const o1 = ctx.createOscillator(), g1 = ctx.createGain();
+      o1.type = 'sine'; o1.frequency.setValueAtTime(880, t); o1.frequency.exponentialRampToValueAtTime(440, t + 0.08);
+      g1.gain.setValueAtTime(0.5, t); g1.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+      o1.connect(g1); g1.connect(master); o1.start(); o1.stop(t + 0.7);
+      // Harmonic
+      const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+      o2.type = 'sine'; o2.frequency.setValueAtTime(4400, t);
+      g2.gain.setValueAtTime(0.06, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      o2.connect(g2); g2.connect(master); o2.start(); o2.stop(t + 0.15);
+    },
+    boop: function(ctx, master) {
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator(), filt = ctx.createBiquadFilter(), gain = ctx.createGain();
+      osc.type = 'square'; osc.frequency.value = 280;
+      filt.type = 'lowpass'; filt.frequency.value = 650; filt.Q.value = 1.2;
+      gain.gain.setValueAtTime(0.0, t); gain.gain.linearRampToValueAtTime(0.22, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.connect(filt); filt.connect(gain); gain.connect(master); osc.start(); osc.stop(t + 0.25);
+    },
+    cymbal: function(ctx, master) {
+      const t = ctx.currentTime;
+      const size = Math.floor(ctx.sampleRate * 0.12);
+      const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i = 0; i < size; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(), filt = ctx.createBiquadFilter(), gain = ctx.createGain();
+      src.buffer = buf; filt.type = 'highpass'; filt.frequency.value = 7500;
+      gain.gain.setValueAtTime(0.28, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      src.connect(filt); filt.connect(gain); gain.connect(master); src.start();
+    },
+    piano: function(ctx, master) {
+      const t = ctx.currentTime;
+      [261.63, 329.63, 392, 493.88].forEach(f => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        o.connect(g); g.connect(master); o.start(); o.stop(t + 0.35);
+      });
+    },
+    bowl: function(ctx, master) {
+      const t = ctx.currentTime;
+      [[1240, 0.32, 2.2], [1245, 0.12, 1.6], [2480, 0.05, 0.9]].forEach(([f, v, d]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.001, t + d);
+        o.connect(g); g.connect(master); o.start(); o.stop(t + d);
+      });
+    },
+    thock: function(ctx, master) {
+      const t = ctx.currentTime;
+      const size = Math.floor(ctx.sampleRate * 0.09);
+      const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+      const d = buf.getChannelData(0); let b = 0;
+      for(let i = 0; i < size; i++) { const w = Math.random() * 2 - 1; b = (b + 0.02 * w) / 1.02; d[i] = b * 4; }
+      const src = ctx.createBufferSource(), filt = ctx.createBiquadFilter(), gain = ctx.createGain();
+      src.buffer = buf; filt.type = 'bandpass'; filt.frequency.value = 220; filt.Q.value = 0.9;
+      gain.gain.setValueAtTime(0.9, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+      src.connect(filt); filt.connect(gain); gain.connect(master); src.start();
+      // click transient
+      const o = ctx.createOscillator(), g2 = ctx.createGain();
+      o.frequency.setValueAtTime(1200, t); o.frequency.exponentialRampToValueAtTime(80, t + 0.012);
+      g2.gain.setValueAtTime(0.15, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
+      o.connect(g2); g2.connect(master); o.start(); o.stop(t + 0.012);
+    },
+    cork: function(ctx, master) {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(190, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.14);
+      g.gain.setValueAtTime(0.65, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      o.connect(g); g.connect(master); o.start(); o.stop(t + 0.22);
+      const size = Math.floor(ctx.sampleRate * 0.06);
+      const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i = 0; i < size; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (size * 0.3));
+      const src = ctx.createBufferSource(), filt = ctx.createBiquadFilter(), gn = ctx.createGain();
+      src.buffer = buf; filt.type = 'bandpass'; filt.frequency.value = 300;
+      gn.gain.setValueAtTime(0.4, t); gn.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      src.connect(filt); filt.connect(gn); gn.connect(master); src.start();
+    },
+    billiard: function(ctx, master) {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(2100, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.018);
+      g.gain.setValueAtTime(0.55, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+      o.connect(g); g.connect(master); o.start(); o.stop(t + 0.09);
+    },
+    bubblewrap: function(ctx, master) {
+      const t = ctx.currentTime;
+      const size = Math.floor(ctx.sampleRate * 0.045);
+      const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i = 0; i < size; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (size * 0.18));
+      const src = ctx.createBufferSource(), filt = ctx.createBiquadFilter(), gain = ctx.createGain();
+      src.buffer = buf; filt.type = 'bandpass'; filt.frequency.value = 4500; filt.Q.value = 1.5;
+      gain.gain.setValueAtTime(0.38, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      src.connect(filt); filt.connect(gain); gain.connect(master); src.start();
+    },
+    coin: function(ctx, master) {
+      const t = ctx.currentTime;
+      // Metallic ring
+      [[2100, 0.28, 0.55], [2800, 0.14, 0.4]].forEach(([f, v, d]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
+        o.connect(g); g.connect(master); o.start(); o.stop(t + d);
+      });
+      // Thud
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.07);
+      g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      o.connect(g); g.connect(master); o.start(); o.stop(t + 0.08);
+    },
+    waterdrop: function(ctx, master) {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(780, t + 0.08);
+      o.frequency.exponentialRampToValueAtTime(350, t + 0.22);
+      g.gain.setValueAtTime(0.0, t); g.gain.linearRampToValueAtTime(0.45, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      o.connect(g); g.connect(master); o.start(); o.stop(t + 0.5);
+    },
+    bamboo: function(ctx, master) {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.setValueAtTime(600, t); o.frequency.exponentialRampToValueAtTime(480, t + 0.04);
+      g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+      o.connect(g); g.connect(master); o.start(); o.stop(t + 0.13);
+      const size = Math.floor(ctx.sampleRate * 0.05);
+      const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i = 0; i < size; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (size * 0.25));
+      const src = ctx.createBufferSource(), filt = ctx.createBiquadFilter(), gn = ctx.createGain();
+      src.buffer = buf; filt.type = 'bandpass'; filt.frequency.value = 1200; filt.Q.value = 2;
+      gn.gain.value = 0.25;
+      src.connect(filt); filt.connect(gn); gn.connect(master); src.start();
+    },
+    leaf: function(ctx, master) {
+      const t = ctx.currentTime;
+      const dur = 0.18;
+      const size = Math.floor(ctx.sampleRate * dur);
+      const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i = 0; i < size; i++) {
+        const env = Math.exp(-i / (size * 0.4)) * (0.6 + 0.4 * Math.sin(i * 0.08));
+        d[i] = (Math.random() * 2 - 1) * env;
+      }
+      const src = ctx.createBufferSource(), filt = ctx.createBiquadFilter(), gain = ctx.createGain();
+      src.buffer = buf; filt.type = 'bandpass'; filt.frequency.value = 2800; filt.Q.value = 0.6;
+      gain.gain.setValueAtTime(0.5, t); gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      src.connect(filt); filt.connect(gain); gain.connect(master); src.start();
+    },
+    ice: function(ctx, master) {
+      const t = ctx.currentTime;
+      const size = Math.floor(ctx.sampleRate * 0.06);
+      const buf = ctx.createBuffer(1, size, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i = 0; i < size; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i * 60 / size);
+      const src = ctx.createBufferSource(), filt = ctx.createBiquadFilter(), gain = ctx.createGain();
+      src.buffer = buf; filt.type = 'highpass'; filt.frequency.value = 6000;
+      gain.gain.setValueAtTime(0.45, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      src.connect(filt); filt.connect(gain); gain.connect(master); src.start();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(3200, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.06);
+      g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      o.connect(g); g.connect(master); o.start(); o.stop(t + 0.08);
+    },
+    glass: function(ctx, master) {
+      const t = ctx.currentTime;
+      const base = 1900 + Math.random() * 150;
+      [[base, 0.18, 0.9], [base * 1.5, 0.07, 0.6]].forEach(([f, v, d]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.006);
+        g.gain.exponentialRampToValueAtTime(0.001, t + d);
+        o.connect(g); g.connect(master); o.start(); o.stop(t + d);
+      });
+    },
   },
   
   throw: function() {
@@ -967,6 +1290,7 @@ const THEMES = {
 };
 
 let currentTheme = 'default';
+let currentPopSound = 'balloon';
 
 // --- REFS ---
 const canvas = document.getElementById('gameCanvas');
@@ -984,6 +1308,10 @@ const muteIcon = document.getElementById('mute-icon');
 const overlay = document.getElementById('overlay');
 const mainBtn = document.getElementById('main-btn');
 const themeBtn = document.getElementById('theme-btn');
+const soundBtn = document.getElementById('sound-btn');
+const soundModal = document.getElementById('sound-modal');
+const closeSoundBtn = document.getElementById('close-sound-btn');
+const soundList = document.getElementById('sound-list');
 const themeModal = document.getElementById('theme-modal');
 const closeThemeBtn = document.getElementById('close-theme-btn');
 const themeGrid = document.getElementById('theme-grid');
@@ -1275,8 +1603,74 @@ function selectTheme(themeName) {
   }
 }
 
-// Load saved theme
-const savedTheme = localStorage.getItem('zenPopTheme');
+// --- POP SOUND DATA ---
+const POP_SOUNDS = [
+  { key: 'balloon',   name: 'Balloon Pop',          category: 'Musical & Lounge', desc: 'The classic' },
+  { key: 'marimba',  name: 'Marimba Pluck',         category: 'Musical & Lounge', desc: 'Hollow, woody, tropical' },
+  { key: 'boop',     name: 'Lo-Fi Synth Boop',      category: 'Musical & Lounge', desc: 'Muffled, warm, retro' },
+  { key: 'cymbal',   name: 'Jazz Cymbal Tap',        category: 'Musical & Lounge', desc: 'Crisp ride bell ping' },
+  { key: 'piano',    name: 'Staccato Piano Chord',   category: 'Musical & Lounge', desc: 'Quick warm jazz chord' },
+  { key: 'bowl',     name: 'Singing Bowl Ding',      category: 'Musical & Lounge', desc: 'Pure crystalline ping' },
+  { key: 'thock',    name: 'Keyboard Thock',         category: 'Tactile & ASMR',   desc: 'Deep creamy keyboard click' },
+  { key: 'cork',     name: 'Cork Pop',               category: 'Tactile & ASMR',   desc: 'Rounded wine cork thwump' },
+  { key: 'billiard', name: 'Billiard Ball Clack',    category: 'Tactile & ASMR',   desc: 'Heavy resinous smack' },
+  { key: 'bubblewrap', name: 'Bubble Wrap Snap',     category: 'Tactile & ASMR',   desc: 'Light plastic snap' },
+  { key: 'coin',     name: 'Heavy Coin Drop',        category: 'Tactile & ASMR',   desc: 'Silver coin on wood' },
+  { key: 'waterdrop', name: 'Cave Water Drop',       category: 'Organic & Nature',  desc: 'Hollow bloop echo' },
+  { key: 'bamboo',   name: 'Bamboo Knock',           category: 'Organic & Nature',  desc: 'Hollow wood tock' },
+  { key: 'leaf',     name: 'Crisp Leaf Crunch',      category: 'Organic & Nature',  desc: 'Perfect autumn crumble' },
+  { key: 'ice',      name: 'Ice Cube Crack',         category: 'Organic & Nature',  desc: 'Sharp glass fracture' },
+  { key: 'glass',    name: 'Soft Glass Clink',       category: 'Organic & Nature',  desc: 'Thin crystal toast' },
+];
+
+function initSoundPicker() {
+  const categories = [];
+  const seen = {};
+  POP_SOUNDS.forEach(s => { if(!seen[s.category]) { seen[s.category] = true; categories.push(s.category); } });
+  let html = '';
+  categories.forEach(cat => {
+    html += `<div class="sound-category-label">${cat}</div>`;
+    POP_SOUNDS.filter(s => s.category === cat).forEach(s => {
+      const active = s.key === currentPopSound ? ' active' : '';
+      html += `<div class="sound-item${active}" data-key="${s.key}">
+        <span class="sound-item-name">${s.name}</span>
+        <span class="sound-item-desc">${s.desc}</span>
+        <button class="sound-play-btn" data-key="${s.key}" title="Preview">&#9654;</button>
+      </div>`;
+    });
+  });
+  soundList.innerHTML = html;
+}
+
+function openSoundModal() { initSoundPicker(); soundModal.classList.add('open'); }
+function closeSoundModal() { soundModal.classList.remove('open'); }
+
+soundBtn.addEventListener('click', e => { e.stopPropagation(); Sound.init(); openSoundModal(); });
+closeSoundBtn.addEventListener('click', e => { e.stopPropagation(); closeSoundModal(); });
+soundModal.addEventListener('click', e => { if(e.target === soundModal) closeSoundModal(); });
+
+soundList.addEventListener('click', e => {
+  const playBtn = e.target.closest('.sound-play-btn');
+  const item = e.target.closest('.sound-item');
+  if(playBtn) {
+    e.stopPropagation();
+    Sound.init();
+    const key = playBtn.getAttribute('data-key');
+    if(Sound.popSounds[key]) Sound.popSounds[key](Sound.ctx, Sound.masterGain);
+    return;
+  }
+  if(item) {
+    const key = item.getAttribute('data-key');
+    currentPopSound = key;
+    localStorage.setItem('zenPopSound', key);
+    initSoundPicker();
+  }
+});
+
+// Load saved pop sound
+const savedPopSound = localStorage.getItem('zenPopSound');
+if(savedPopSound && Sound.popSounds[savedPopSound]) currentPopSound = savedPopSound;
+
 if (savedTheme && THEMES[savedTheme]) {
   currentTheme = savedTheme;
 }
