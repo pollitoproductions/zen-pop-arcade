@@ -439,6 +439,24 @@
   }
   .sound-play-btn:hover { background: rgba(255,75,43,0.4); }
 
+  .dart-item-preview {
+    width: 90px;
+    height: 36px;
+    border-radius: 6px;
+    background: #111827;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .dart-item-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+  }
+  .dart-item-text .sound-item-name { flex: none; }
+  .dart-item-text .sound-item-desc { flex: none; }
+
 </style>
 </head>
 <body>
@@ -629,16 +647,6 @@ const Sound = {
         o.connect(g); g.connect(master); o.start(); o.stop(t + 0.35);
       });
     },
-    bowl: function(ctx, master) {
-      const t = ctx.currentTime;
-      [[1240, 0.32, 2.2], [1245, 0.12, 1.6], [2480, 0.05, 0.9]].forEach(([f, v, d]) => {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.type = 'sine'; o.frequency.value = f;
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.012);
-        g.gain.exponentialRampToValueAtTime(0.001, t + d);
-        o.connect(g); g.connect(master); o.start(); o.stop(t + d);
-      });
-    },
     thock: function(ctx, master) {
       const t = ctx.currentTime;
       const size = Math.floor(ctx.sampleRate * 0.09);
@@ -687,21 +695,6 @@ const Sound = {
       src.buffer = buf; filt.type = 'bandpass'; filt.frequency.value = 4500; filt.Q.value = 1.5;
       gain.gain.setValueAtTime(0.38, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
       src.connect(filt); filt.connect(gain); gain.connect(master); src.start();
-    },
-    coin: function(ctx, master) {
-      const t = ctx.currentTime;
-      // Metallic ring
-      [[2100, 0.28, 0.55], [2800, 0.14, 0.4]].forEach(([f, v, d]) => {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.type = 'sine'; o.frequency.value = f;
-        g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d);
-        o.connect(g); g.connect(master); o.start(); o.stop(t + d);
-      });
-      // Thud
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = 'sine'; o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.07);
-      g.gain.setValueAtTime(0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-      o.connect(g); g.connect(master); o.start(); o.stop(t + 0.08);
     },
     waterdrop: function(ctx, master) {
       const t = ctx.currentTime;
@@ -756,17 +749,6 @@ const Sound = {
       o.type = 'sine'; o.frequency.setValueAtTime(3200, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.06);
       g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
       o.connect(g); g.connect(master); o.start(); o.stop(t + 0.08);
-    },
-    glass: function(ctx, master) {
-      const t = ctx.currentTime;
-      const base = 1900 + Math.random() * 150;
-      [[base, 0.18, 0.9], [base * 1.5, 0.07, 0.6]].forEach(([f, v, d]) => {
-        const o = ctx.createOscillator(), g = ctx.createGain();
-        o.type = 'sine'; o.frequency.value = f;
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.006);
-        g.gain.exponentialRampToValueAtTime(0.001, t + d);
-        o.connect(g); g.connect(master); o.start(); o.stop(t + d);
-      });
     },
   },
   
@@ -1639,17 +1621,14 @@ const POP_SOUNDS = [
   { key: 'boop',     name: 'Lo-Fi Synth Boop',      category: 'Musical & Lounge', desc: 'Muffled, warm, retro' },
   { key: 'cymbal',   name: 'Jazz Cymbal Tap',        category: 'Musical & Lounge', desc: 'Crisp ride bell ping' },
   { key: 'piano',    name: 'Staccato Piano Chord',   category: 'Musical & Lounge', desc: 'Quick warm jazz chord' },
-  { key: 'bowl',     name: 'Singing Bowl Ding',      category: 'Musical & Lounge', desc: 'Pure crystalline ping' },
   { key: 'thock',    name: 'Keyboard Thock',         category: 'Tactile & ASMR',   desc: 'Deep creamy keyboard click' },
   { key: 'cork',     name: 'Cork Pop',               category: 'Tactile & ASMR',   desc: 'Rounded wine cork thwump' },
   { key: 'billiard', name: 'Billiard Ball Clack',    category: 'Tactile & ASMR',   desc: 'Heavy resinous smack' },
   { key: 'bubblewrap', name: 'Bubble Wrap Snap',     category: 'Tactile & ASMR',   desc: 'Light plastic snap' },
-  { key: 'coin',     name: 'Heavy Coin Drop',        category: 'Tactile & ASMR',   desc: 'Silver coin on wood' },
   { key: 'waterdrop', name: 'Cave Water Drop',       category: 'Organic & Nature',  desc: 'Hollow bloop echo' },
   { key: 'bamboo',   name: 'Bamboo Knock',           category: 'Organic & Nature',  desc: 'Hollow wood tock' },
   { key: 'leaf',     name: 'Crisp Leaf Crunch',      category: 'Organic & Nature',  desc: 'Perfect autumn crumble' },
   { key: 'ice',      name: 'Ice Cube Crack',         category: 'Organic & Nature',  desc: 'Sharp glass fracture' },
-  { key: 'glass',    name: 'Soft Glass Clink',       category: 'Organic & Nature',  desc: 'Thin crystal toast' },
 ];
 
 function initSoundPicker() {
@@ -1718,6 +1697,14 @@ const DART_STYLES = [
   { key: 'star',       name: 'Shooting Star',      category: 'Elemental',          desc: 'Light core trailing cosmic gold dust' },
 ];
 
+function drawDartPreview(key, canvas) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(0, 0, w, h);
+  if (DART_DRAW[key]) DART_DRAW[key](ctx, w / 2, h / 2, 0);
+}
+
 function initDartPicker() {
   const categories = [];
   const seen = {};
@@ -1728,12 +1715,19 @@ function initDartPicker() {
     DART_STYLES.filter(s => s.category === cat).forEach(s => {
       const active = s.key === currentDartStyle ? ' active' : '';
       html += `<div class="sound-item${active}" data-dart="${s.key}">
-        <span class="sound-item-name">${s.name}</span>
-        <span class="sound-item-desc">${s.desc}</span>
+        <canvas class="dart-item-preview" id="dart-prev-${s.key}" width="90" height="36"></canvas>
+        <div class="dart-item-text">
+          <span class="sound-item-name">${s.name}</span>
+          <span class="sound-item-desc">${s.desc}</span>
+        </div>
       </div>`;
     });
   });
   dartList.innerHTML = html;
+  DART_STYLES.forEach(s => {
+    const canvas = document.getElementById(`dart-prev-${s.key}`);
+    if (canvas) drawDartPreview(s.key, canvas);
+  });
 }
 
 function openDartModal() { initDartPicker(); dartModal.classList.add('open'); }
