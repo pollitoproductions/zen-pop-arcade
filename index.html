@@ -158,7 +158,7 @@
 
   .theme-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     margin-bottom: 30px;
   }
@@ -468,6 +468,26 @@ const CONFIG = {
 
 // --- THEMES ---
 const THEMES = {
+  default: {
+    name: 'Default',
+    vibe: 'Classic zen experience',
+    previewGradient: 'linear-gradient(135deg, #2c3e50, #000000)',
+    bgGradient: (ctx, w, h) => {
+      let bg = ctx.createRadialGradient(w/2, h/2, w/4, w/2, h/2, w);
+      bg.addColorStop(0, '#2c3e50'); bg.addColorStop(1, '#000000');
+      return bg;
+    },
+    balloonStyle: (b, ctx) => {
+      let grad = ctx.createRadialGradient(b.x - 8, b.y - 8, 2, b.x, b.y, b.r);
+      grad.addColorStop(0, `hsla(${b.hue}, 100%, 85%, 1)`);
+      grad.addColorStop(0.4, `hsla(${b.hue}, 80%, 55%, 1)`);
+      grad.addColorStop(1, `hsla(${b.hue}, 90%, 35%, 1)`);
+      return grad;
+    },
+    stringColor: 'rgba(255,255,255,0.2)',
+    particleStyle: (p) => `hsla(${p.hue}, 100%, 60%, ${p.life})`,
+    targetShape: 'circle'
+  },
   riverstone: {
     name: 'Riverstone Zen',
     vibe: 'Grounded & deeply meditative',
@@ -488,26 +508,6 @@ const THEMES = {
     particleStyle: (p) => `rgba(139, 134, 128, ${p.life * 0.6})`,
     targetShape: 'pebble',
     particles: 'ripple'
-  },
-  default: {
-    name: 'Default',
-    vibe: 'Classic zen experience',
-    previewGradient: 'linear-gradient(135deg, #2c3e50, #000000)',
-    bgGradient: (ctx, w, h) => {
-      let bg = ctx.createRadialGradient(w/2, h/2, w/4, w/2, h/2, w);
-      bg.addColorStop(0, '#2c3e50'); bg.addColorStop(1, '#000000');
-      return bg;
-    },
-    balloonStyle: (b, ctx) => {
-      let grad = ctx.createRadialGradient(b.x - 8, b.y - 8, 2, b.x, b.y, b.r);
-      grad.addColorStop(0, `hsla(${b.hue}, 100%, 85%, 1)`);
-      grad.addColorStop(0.4, `hsla(${b.hue}, 80%, 55%, 1)`);
-      grad.addColorStop(1, `hsla(${b.hue}, 90%, 35%, 1)`);
-      return grad;
-    },
-    stringColor: 'rgba(255,255,255,0.2)',
-    particleStyle: (p) => `hsla(${p.hue}, 100%, 60%, ${p.life})`,
-    targetShape: 'circle'
   },
   sakura: {
     name: 'Sakura Spring',
