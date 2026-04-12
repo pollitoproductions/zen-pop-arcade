@@ -370,11 +370,28 @@ const Sound = {
     });
   },
   
+  getThemeMusic: function() {
+    const theme = currentTheme;
+    const musicMap = {
+      default: [[293.66,349.23,415.30,523.25],[196.00,349.23,415.30,493.88],[261.63,329.63,392.00,493.88],[220.00,277.18,349.23,415.30]],
+      sakura: [[329.63,392.00,493.88,587.33],[293.66,349.23,440.00,523.25],[349.23,415.30,523.25,659.25],[329.63,392.00,493.88,587.33]],
+      aquarium: [[130.81,164.81,196.00,246.94],[146.83,174.61,220.00,277.18],[164.81,196.00,246.94,329.63],[146.83,174.61,220.00,277.18]],
+      midnight: [[138.59,184.99,246.94,329.63],[164.81,220.00,293.33,392.00],[174.61,233.08,311.13,415.30],[164.81,220.00,293.33,392.00]],
+      cafe: [[87.31,110.00,130.81,164.81],[98.00,123.47,146.83,196.00],[110.00,130.81,164.81,196.00],[123.47,146.83,196.00,246.94]],
+      cosmic: [[246.94,329.63,415.30,523.25],[196.00,261.63,329.63,415.30],[293.66,392.00,493.88,587.33],[349.23,466.16,587.33,698.46]],
+      autumn: [[110.00,146.83,196.00,246.94],[123.47,164.81,220.00,293.66],[130.81,174.61,233.08,311.13],[146.83,196.00,261.63,349.23]],
+      glacial: [[261.63,329.63,392.00,523.25],[293.66,369.99,440.00,587.33],[329.63,415.30,493.88,659.25],[293.66,369.99,440.00,587.33]],
+      minimalist: [[110.00,220.00,330.00,440.00],[110.00,220.00,330.00,440.00],[110.00,220.00,330.00,440.00],[110.00,220.00,330.00,440.00]],
+      riverstone: [[98.00,130.81,164.81,196.00],[110.00,146.83,196.00,220.00],[123.47,164.81,196.00,246.94],[110.00,146.83,196.00,220.00]]
+    };
+    return musicMap[theme] || musicMap.default;
+  },
+  
   startLoungeMusic: function() {
     if(this.musicInterval) clearInterval(this.musicInterval);
     if(this.muted) return;
     let step = 0;
-    const progression = [[293.66,349.23,415.30,523.25],[196.00,349.23,415.30,493.88],[261.63,329.63,392.00,493.88],[220.00,277.18,349.23,415.30]];
+    const progression = this.getThemeMusic();
     const playStep = () => {
         if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
         this.playChord(progression[step % 4], 2.5);
@@ -707,6 +724,11 @@ function selectTheme(themeName) {
     currentTheme = themeName;
     localStorage.setItem('zenPopTheme', themeName);
     initThemeSelector();
+    // Restart music with new theme
+    if (!Sound.muted && !gameRunning) {
+      Sound.stopMusic();
+      Sound.startLoungeMusic();
+    }
   }
 }
 
@@ -777,6 +799,12 @@ function startGame() {
   height = window.innerHeight;
   canvas.width = width;
   canvas.height = height;
+  
+  // Restart music with current theme in case theme was changed
+  if (!Sound.muted) {
+    Sound.stopMusic();
+    Sound.startLoungeMusic();
+  }
   
   spawnBalloons();
   resetDartPos();
