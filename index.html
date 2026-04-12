@@ -1748,7 +1748,7 @@ dartList.addEventListener('click', e => {
 
 // Load saved dart style
 const savedDartStyle = localStorage.getItem('zenDartStyle');
-if(savedDartStyle && DART_DRAW[savedDartStyle]) currentDartStyle = savedDartStyle;
+if(savedDartStyle && DART_STYLES.some(s => s.key === savedDartStyle)) currentDartStyle = savedDartStyle;
 
 // Load saved theme
 const savedTheme = localStorage.getItem('zenPopTheme');
