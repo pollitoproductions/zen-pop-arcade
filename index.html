@@ -2927,36 +2927,59 @@ const DART_DRAW = {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
     // Drop shadow
     ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 6;
-    // Flights — standard dart shape (two visible fins)
-    // Top fin
+    // Flights — standard rounded dart fins with yin-yang art
+    // Define fin paths as functions for reuse
+    function topFin(c) {
+      c.beginPath();
+      c.moveTo(-25, 0);
+      c.lineTo(-30, -3);
+      c.bezierCurveTo(-38, -14, -52, -15, -50, -3);
+      c.lineTo(-48, 0);
+      c.closePath();
+    }
+    function bottomFin(c) {
+      c.beginPath();
+      c.moveTo(-25, 0);
+      c.lineTo(-30, 3);
+      c.bezierCurveTo(-38, 14, -52, 15, -50, 3);
+      c.lineTo(-48, 0);
+      c.closePath();
+    }
+    // Top fin — white base
+    topFin(ctx); ctx.fillStyle = '#fff'; ctx.fill();
+    // Bottom fin — black base
+    bottomFin(ctx); ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    // Yin-yang S-curve (swap colors across the divider)
+    ctx.save();
+    // Clip to top fin, fill the yin (black) teardrop
+    topFin(ctx); ctx.clip();
     ctx.beginPath();
-    ctx.moveTo(-25, -1);
-    ctx.lineTo(-32, -4);
-    ctx.bezierCurveTo(-42, -16, -54, -16, -52, -4);
-    ctx.lineTo(-48, -1);
+    ctx.moveTo(-48, 0);
+    ctx.bezierCurveTo(-44, -5, -34, 4, -25, 0);
+    ctx.lineTo(-25, 2); ctx.lineTo(-48, 2);
     ctx.closePath();
     ctx.fillStyle = '#1a1a1a'; ctx.fill();
-    // Bottom fin
+    // Small white dot in the black area of top fin
+    ctx.beginPath(); ctx.arc(-40, -2.5, 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.restore();
+    ctx.save();
+    // Clip to bottom fin, fill the yang (white) teardrop
+    bottomFin(ctx); ctx.clip();
     ctx.beginPath();
-    ctx.moveTo(-25, 1);
-    ctx.lineTo(-32, 4);
-    ctx.bezierCurveTo(-42, 16, -54, 16, -52, 4);
-    ctx.lineTo(-48, 1);
+    ctx.moveTo(-48, 0);
+    ctx.bezierCurveTo(-44, 5, -34, -4, -25, 0);
+    ctx.lineTo(-25, -2); ctx.lineTo(-48, -2);
     ctx.closePath();
     ctx.fillStyle = '#fff'; ctx.fill();
+    // Small black dot in the white area of bottom fin
+    ctx.beginPath(); ctx.arc(-40, 2.5, 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    ctx.restore();
     // Fin outlines
     ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(-25, -1); ctx.lineTo(-32, -4);
-    ctx.bezierCurveTo(-42, -16, -54, -16, -52, -4);
-    ctx.lineTo(-48, -1); ctx.closePath(); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(-25, 1); ctx.lineTo(-32, 4);
-    ctx.bezierCurveTo(-42, 16, -54, 16, -52, 4);
-    ctx.lineTo(-48, 1); ctx.closePath(); ctx.stroke();
-    // Center spine
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(-50, 0); ctx.lineTo(-25, 0); ctx.stroke();
+    topFin(ctx); ctx.stroke();
+    bottomFin(ctx); ctx.stroke();
     ctx.shadowColor = 'transparent';
     // Silver/metal section (first half of barrel, near flights)
     let sg = ctx.createLinearGradient(0, -3.5, 0, 3.5);
@@ -2968,9 +2991,9 @@ const DART_DRAW = {
     // Grip rings on silver section
     ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.8;
     for(let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-20+(i*7), -3.5); ctx.lineTo(-20+(i*7), 3.5); ctx.stroke(); }
-    // Taper transition from silver into bronze
-    let tg = ctx.createLinearGradient(-3, 0, 3, 0);
-    tg.addColorStop(0, '#ccc'); tg.addColorStop(1, '#d4a830');
+    // Taper transition (bronze, widening into thicker section)
+    let tg = ctx.createLinearGradient(0, -5, 0, 5);
+    tg.addColorStop(0, '#6b4f12'); tg.addColorStop(0.2, '#d4a830'); tg.addColorStop(0.5, '#f0d860'); tg.addColorStop(0.8, '#d4a830'); tg.addColorStop(1, '#6b4f12');
     ctx.fillStyle = tg;
     ctx.beginPath();
     ctx.moveTo(-3, -3.5); ctx.lineTo(3, -5); ctx.lineTo(3, 5); ctx.lineTo(-3, 3.5);
