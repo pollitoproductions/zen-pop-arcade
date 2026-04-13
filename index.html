@@ -1104,14 +1104,14 @@ const Sound = {
         gain.connect(this.masterGain);
         osc.start();
         osc.stop(t + duration + 0.1);
-        // Add a soft octave-up helper for low frequencies so they're audible on small speakers
-        if (f < 170) {
+        // Add an octave-up helper for low frequencies so they're audible on small speakers
+        if (f < 300) {
           const osc2 = this.ctx.createOscillator();
           const gain2 = this.ctx.createGain();
           osc2.type = 'sine';
           osc2.frequency.value = f * 2 + (Math.random() * 2 - 1);
           gain2.gain.setValueAtTime(0, t);
-          gain2.gain.linearRampToValueAtTime(0.06 - (i*0.008), t + 0.05);
+          gain2.gain.linearRampToValueAtTime(0.10 - (i*0.012), t + 0.05);
           gain2.gain.exponentialRampToValueAtTime(0.001, t + duration);
           osc2.connect(gain2);
           gain2.connect(this.masterGain);
@@ -1139,9 +1139,9 @@ const Sound = {
     source.loop = true;
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 300;
+    filter.frequency.value = 600;
     const gainNode = this.ctx.createGain();
-    gainNode.gain.value = 0.12;
+    gainNode.gain.value = 0.30;
     source.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(this.masterGain);
@@ -1173,7 +1173,7 @@ const Sound = {
       matcha:         [[146.83,174.61,220.00,261.63],[164.81,196.00,246.94,293.66],[130.81,164.81,196.00,246.94],[110.00,146.83,174.61,220.00]],
       neonsynth:      [[277.18,369.99,493.88,659.25],[311.13,415.30,554.37,739.99],[329.63,440.00,587.33,783.99],[311.13,415.30,554.37,739.99]],
       honeycomb:      [[87.31,116.54,138.59,185.00],[73.42,98.00,123.47,164.81],[82.41,110.00,130.81,174.61],[87.31,116.54,138.59,185.00]],
-      cloud:          [[523.25,659.25,783.99,987.77],[587.33,739.99,880.00,1108.73],[493.88,622.25,783.99,987.77],[523.25,659.25,783.99,987.77]],
+      cloud:          [[261.63,329.63,392.00,493.88],[293.66,369.99,440.00,554.37],[246.94,311.13,392.00,493.88],[261.63,329.63,392.00,493.88]],
       crystal_cavern: [[155.56,196.00,246.94,311.13],[138.59,174.61,220.00,277.18],[164.81,207.65,261.63,329.63],[155.56,196.00,246.94,311.13]],
       clockwork:      [[220.00,293.66,369.99,440.00],[196.00,261.63,329.63,392.00],[207.65,277.18,349.23,415.30],[220.00,293.66,369.99,440.00]],
       beach:          [[174.61,220.00,261.63,329.63],[164.81,207.65,246.94,311.13],[184.99,233.08,277.18,349.23],[174.61,220.00,261.63,329.63]]
