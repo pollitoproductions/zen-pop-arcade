@@ -2815,13 +2815,31 @@ const DART_DRAW = {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
     // Drop shadow
     ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 6;
-    // Flights — checkered pattern
+    // Flights — yin-yang pattern
+    // White half (top)
+    ctx.beginPath();
+    ctx.moveTo(-48, -13); ctx.lineTo(-25, 0); ctx.lineTo(-53, 0); ctx.closePath();
+    ctx.fillStyle = '#fff'; ctx.fill();
+    // Black half (bottom)
+    ctx.beginPath();
+    ctx.moveTo(-48, 13); ctx.lineTo(-25, 0); ctx.lineTo(-53, 0); ctx.closePath();
+    ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    // S-curve divider
+    ctx.beginPath();
+    ctx.moveTo(-53, 0);
+    ctx.bezierCurveTo(-46, -5, -36, 5, -25, 0);
+    ctx.bezierCurveTo(-36, -5, -46, 5, -53, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    // Small white dot in black half
+    ctx.beginPath(); ctx.arc(-43, 3, 2.2, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+    // Small black dot in white half
+    ctx.beginPath(); ctx.arc(-35, -3, 2.2, 0, Math.PI * 2); ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    // Flight outline
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 0.8;
     ctx.beginPath();
     ctx.moveTo(-48, -13); ctx.lineTo(-25, 0); ctx.lineTo(-48, 13); ctx.lineTo(-53, 0); ctx.closePath();
-    ctx.fillStyle = '#fff'; ctx.fill();
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath(); ctx.moveTo(-48, -13); ctx.lineTo(-36, -6.5); ctx.lineTo(-36, 0); ctx.lineTo(-53, 0); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(-36, 0); ctx.lineTo(-25, 0); ctx.lineTo(-36, 6.5); ctx.closePath(); ctx.fill();
+    ctx.stroke();
     ctx.shadowColor = 'transparent';
     // Brass barrel
     let bg = ctx.createLinearGradient(0, -4.5, 0, 4.5);
