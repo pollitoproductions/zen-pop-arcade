@@ -2865,23 +2865,18 @@ const DART_DRAW = {
     ctx.fillStyle = mg;
     ctx.beginPath(); ctx.roundRect(-22, -3, 31, 6, 2); ctx.fill();
     ctx.shadowColor = 'transparent';
-    // T crossbar
+    // T crossbar (vertical bar at right end of handle)
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(9, -11); ctx.lineTo(9, 11); ctx.stroke();
-    // Top tine (parallel to handle, going right)
+    ctx.beginPath(); ctx.moveTo(9, -13); ctx.lineTo(9, 13); ctx.stroke();
+    // Top tine — from top tip of T, going right, open ended
     ctx.lineWidth = 3.5; ctx.strokeStyle = '#bbb';
-    ctx.beginPath(); ctx.moveTo(9, -9); ctx.lineTo(30, -9); ctx.stroke();
-    // Bottom tine
-    ctx.beginPath(); ctx.moveTo(9, 9); ctx.lineTo(30, 9); ctx.stroke();
-    // U-curve connecting tips
-    ctx.beginPath();
-    ctx.moveTo(30, -9);
-    ctx.bezierCurveTo(36, -9, 36, 9, 30, 9);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(9, -13); ctx.lineTo(32, -13); ctx.stroke();
+    // Bottom tine — from bottom tip of T, going right, open ended
+    ctx.beginPath(); ctx.moveTo(9, 13); ctx.lineTo(32, 13); ctx.stroke();
     // Highlights
     ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.moveTo(-20, -1.5); ctx.lineTo(8, -1.5); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(10, -7.5); ctx.lineTo(29, -7.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10, -11.5); ctx.lineTo(31, -11.5); ctx.stroke();
     ctx.restore();
   },
 
