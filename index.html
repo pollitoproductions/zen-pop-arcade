@@ -2949,37 +2949,15 @@ const DART_DRAW = {
     topFin(ctx); ctx.fillStyle = '#fff'; ctx.fill();
     // Bottom fin — black base
     bottomFin(ctx); ctx.fillStyle = '#1a1a1a'; ctx.fill();
-    // Yin-yang S-curve (swap colors across the divider)
-    ctx.save();
-    // Clip to top fin, fill the yin (black) teardrop
-    topFin(ctx); ctx.clip();
-    ctx.beginPath();
-    ctx.moveTo(-48, 0);
-    ctx.bezierCurveTo(-44, -5, -34, 4, -25, 0);
-    ctx.lineTo(-25, 2); ctx.lineTo(-48, 2);
-    ctx.closePath();
-    ctx.fillStyle = '#1a1a1a'; ctx.fill();
-    // Small white dot in the black area of top fin
-    ctx.beginPath(); ctx.arc(-40, -2.5, 1.8, 0, Math.PI * 2);
-    ctx.fillStyle = '#fff'; ctx.fill();
-    ctx.restore();
-    ctx.save();
-    // Clip to bottom fin, fill the yang (white) teardrop
-    bottomFin(ctx); ctx.clip();
-    ctx.beginPath();
-    ctx.moveTo(-48, 0);
-    ctx.bezierCurveTo(-44, 5, -34, -4, -25, 0);
-    ctx.lineTo(-25, -2); ctx.lineTo(-48, -2);
-    ctx.closePath();
-    ctx.fillStyle = '#fff'; ctx.fill();
-    // Small black dot in the white area of bottom fin
-    ctx.beginPath(); ctx.arc(-40, 2.5, 1.8, 0, Math.PI * 2);
-    ctx.fillStyle = '#1a1a1a'; ctx.fill();
-    ctx.restore();
     // Fin outlines
     ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 0.8;
     topFin(ctx); ctx.stroke();
     bottomFin(ctx); ctx.stroke();
+    // Yin-yang dots — black dot on white fin, white dot on black fin
+    ctx.beginPath(); ctx.arc(-38, -6, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a1a'; ctx.fill();
+    ctx.beginPath(); ctx.arc(-38, 6, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff'; ctx.fill();
     ctx.shadowColor = 'transparent';
     // Silver/metal section (first half of barrel, near flights)
     let sg = ctx.createLinearGradient(0, -3.5, 0, 3.5);
