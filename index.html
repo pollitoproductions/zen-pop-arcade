@@ -1422,7 +1422,7 @@ const THEMES = {
     },
     stringColor: 'rgba(176, 224, 230, 0.4)',
     particleStyle: (p) => `rgba(173, 216, 230, ${p.life * 0.9})`,
-    targetShape: 'crystal',
+    targetShape: 'icecube',
     particles: 'shatter'
   },
   minimalist: {
@@ -1892,6 +1892,18 @@ function drawThemeBalloonPreviewShape(ctx, b, theme) {
     }
     ctx.closePath();
     ctx.fill();
+  } else if (shape === 'icecube') {
+    // Ice cube shape — rounded square with highlights
+    ctx.fillStyle = theme.balloonStyle(b, ctx);
+    ctx.beginPath(); ctx.roundRect(b.x - b.r, b.y - b.r, b.r * 2, b.r * 2, 4); ctx.fill();
+    // Frosted edge highlight (top-left)
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(b.x - b.r + 4, b.y - b.r); ctx.lineTo(b.x + b.r - 4, b.y - b.r); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b.x - b.r, b.y - b.r + 4); ctx.lineTo(b.x - b.r, b.y + b.r - 4); ctx.stroke();
+    // Internal crack/facet lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 0.7;
+    ctx.beginPath(); ctx.moveTo(b.x - b.r * 0.5, b.y - b.r * 0.6); ctx.lineTo(b.x + b.r * 0.2, b.y + b.r * 0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b.x + b.r * 0.3, b.y - b.r * 0.4); ctx.lineTo(b.x - b.r * 0.1, b.y + b.r * 0.6); ctx.stroke();
   } else if (shape === 'crystal') {
     // Crystal/hexagon shape
     ctx.fillStyle = theme.balloonStyle(b, ctx);
@@ -2595,6 +2607,28 @@ function drawBalloon(b) {
     sg.addColorStop(0, '#fff'); sg.addColorStop(1, 'transparent');
     ctx.fillStyle = sg;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  } else if (shape === 'icecube') {
+    // Ice cube — rounded square with icy highlights and cracks
+    ctx.save();
+    ctx.shadowColor = 'rgba(130,200,230,0.3)'; ctx.shadowBlur = 10;
+    ctx.fillStyle = theme.balloonStyle(b, ctx);
+    ctx.beginPath(); ctx.roundRect(b.x - b.r, b.y - b.r, b.r * 2, b.r * 2, 4); ctx.fill();
+    ctx.restore();
+    // Frosted edge highlight (top-left)
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(b.x - b.r + 4, b.y - b.r); ctx.lineTo(b.x + b.r - 4, b.y - b.r); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b.x - b.r, b.y - b.r + 4); ctx.lineTo(b.x - b.r, b.y + b.r - 4); ctx.stroke();
+    // Internal crack lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(b.x - b.r * 0.5, b.y - b.r * 0.6); ctx.lineTo(b.x + b.r * 0.2, b.y + b.r * 0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b.x + b.r * 0.3, b.y - b.r * 0.4); ctx.lineTo(b.x - b.r * 0.1, b.y + b.r * 0.6); ctx.stroke();
+    // Bright corner gleam
+    ctx.save(); ctx.globalAlpha = 0.25;
+    const icg = ctx.createRadialGradient(b.x - b.r * 0.5, b.y - b.r * 0.5, 0, b.x - b.r * 0.5, b.y - b.r * 0.5, b.r * 0.6);
+    icg.addColorStop(0, '#fff'); icg.addColorStop(1, 'transparent');
+    ctx.fillStyle = icg;
+    ctx.beginPath(); ctx.arc(b.x - b.r * 0.5, b.y - b.r * 0.5, b.r * 0.6, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   } else if (shape === 'crystal') {
     ctx.save();
