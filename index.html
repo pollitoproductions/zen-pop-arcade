@@ -766,7 +766,10 @@ const Sound = {
       this.masterGain.gain.value = 1.0;
       this.masterGain.connect(this.ctx.destination);
     }
-    if(this.ctx.state === 'suspended') this.ctx.resume();
+    if(this.ctx.state === 'suspended') {
+      return this.ctx.resume();
+    }
+    return Promise.resolve();
   },
   
   killAudio: function() {
@@ -780,10 +783,15 @@ const Sound = {
 
   resumeAudio: function() {
     if(this.ctx) {
-        this.ctx.resume();
         if(this.masterGain) this.masterGain.gain.value = 1.0;
+        if(this.ctx.state === 'suspended') {
+          this.ctx.resume().then(() => {
+            if(!this.muted) this.startLoungeMusic();
+          });
+        } else {
+          if(!this.muted) this.startLoungeMusic();
+        }
     }
-    if(!this.muted) this.startLoungeMusic();
   },
 
   toggleMute: function() {
@@ -1090,12 +1098,18 @@ const Sound = {
     let step = 0;
     const progression = this.getThemeMusic();
     const playStep = () => {
-        if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
         this.playChord(progression[step % 4], 2.5);
         step++;
     };
-    playStep();
-    this.musicInterval = setInterval(playStep, 2500);
+    const beginMusic = () => {
+      playStep();
+      this.musicInterval = setInterval(playStep, 2500);
+    };
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().then(beginMusic);
+    } else {
+      beginMusic();
+    }
   },
   
   stopMusic: function() {
@@ -1601,9 +1615,10 @@ window.addEventListener('beforeunload', () => Sound.killAudio());
 
 // --- INIT & RESIZE ---
 mainBtn.addEventListener('click', () => {
-  Sound.init();
-  Sound.startLoungeMusic();
-  startGame();
+  Sound.init().then(() => {
+    Sound.startLoungeMusic();
+    startGame();
+  });
 });
 
 // --- CUSTOMIZE MODAL ---
@@ -1949,7 +1964,7 @@ function initSoundPicker() {
 function openSoundModal() { initSoundPicker(); soundModal.classList.add('open'); }
 function closeSoundModal() { soundModal.classList.remove('open'); }
 
-soundBtn.addEventListener('click', e => { e.stopPropagation(); customizeModal.classList.remove('open'); Sound.init(); openSoundModal(); });
+soundBtn.addEventListener('click', e => { e.stopPropagation(); customizeModal.classList.remove('open'); Sound.init().then(() => openSoundModal()); });
 closeSoundBtn.addEventListener('click', e => { e.stopPropagation(); closeSoundModal(); });
 soundModal.addEventListener('click', e => { if(e.target === soundModal) closeSoundModal(); });
 
@@ -1958,9 +1973,10 @@ soundList.addEventListener('click', e => {
   const item = e.target.closest('.sound-item');
   if(playBtn) {
     e.stopPropagation();
-    Sound.init();
-    const key = playBtn.getAttribute('data-key');
-    if(Sound.popSounds[key]) Sound.popSounds[key](Sound.ctx, Sound.masterGain);
+    Sound.init().then(() => {
+      const key = playBtn.getAttribute('data-key');
+      if(Sound.popSounds[key]) Sound.popSounds[key](Sound.ctx, Sound.masterGain);
+    });
     return;
   }
   if(item) {
@@ -2058,8 +2074,7 @@ themeModal.addEventListener('click', (e) => {
 
 restartIconBtn.addEventListener('click', (e) => {
     e.stopPropagation(); 
-    Sound.init();
-    startGame();
+    Sound.init().then(() => startGame());
 });
 
 menuBtn.addEventListener('click', (e) => {
@@ -2132,9 +2147,9 @@ function startGame() {
   canvas.width = width;
   canvas.height = height;
   
-  // Restart music with current theme in case theme was changed
+  // Ensure music restarts cleanly with current theme
+  Sound.stopMusic();
   if (!Sound.muted) {
-    Sound.stopMusic();
     Sound.startLoungeMusic();
   }
   
