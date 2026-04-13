@@ -2841,32 +2841,43 @@ const DART_DRAW = {
     ctx.moveTo(-48, -13); ctx.lineTo(-25, 0); ctx.lineTo(-48, 13); ctx.lineTo(-53, 0); ctx.closePath();
     ctx.stroke();
     ctx.shadowColor = 'transparent';
-    // Silver/metal back half of barrel (near flights)
+    // Silver/metal section (2/3 of barrel, near flights)
     let sg = ctx.createLinearGradient(0, -3.5, 0, 3.5);
     sg.addColorStop(0, '#888'); sg.addColorStop(0.2, '#ccc'); sg.addColorStop(0.5, '#f0f0f0'); sg.addColorStop(0.8, '#ccc'); sg.addColorStop(1, '#888');
-    ctx.fillStyle = sg; ctx.beginPath(); ctx.roundRect(-25, -3.5, 24, 7, 2); ctx.fill();
-    // Grip rings on silver half
+    ctx.fillStyle = sg;
+    ctx.beginPath();
+    ctx.moveTo(-25, -3.5); ctx.lineTo(7, -3.5); ctx.lineTo(7, 3.5); ctx.lineTo(-25, 3.5);
+    ctx.closePath(); ctx.fill();
+    // Grip rings on silver section
     ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.8;
-    for(let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-20+(i*5.5), -3.5); ctx.lineTo(-20+(i*5.5), 3.5); ctx.stroke(); }
-    // Bronze/metal front half of barrel (toward tip, slightly thicker)
+    for(let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(-18+(i*6), -3.5); ctx.lineTo(-18+(i*6), 3.5); ctx.stroke(); }
+    // Taper transition from silver into bronze
+    let tg = ctx.createLinearGradient(4, 0, 11, 0);
+    tg.addColorStop(0, '#ccc'); tg.addColorStop(1, '#d4a830');
+    ctx.fillStyle = tg;
+    ctx.beginPath();
+    ctx.moveTo(5, -3.5); ctx.lineTo(11, -5); ctx.lineTo(11, 5); ctx.lineTo(5, 3.5);
+    ctx.closePath(); ctx.fill();
+    // Bronze/metal section (1/3 of barrel, toward tip, thicker)
     let bg = ctx.createLinearGradient(0, -5, 0, 5);
     bg.addColorStop(0, '#6b4f12'); bg.addColorStop(0.2, '#d4a830'); bg.addColorStop(0.5, '#f0d860'); bg.addColorStop(0.8, '#d4a830'); bg.addColorStop(1, '#6b4f12');
-    ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(-1, -5, 24, 10, 2); ctx.fill();
-    // Grip rings on bronze half
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.moveTo(11, -5); ctx.lineTo(23, -5); ctx.lineTo(23, 5); ctx.lineTo(11, 5);
+    ctx.closePath(); ctx.fill();
+    // Grip rings on bronze section
     ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 0.8;
-    for(let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(3+(i*5.5), -5); ctx.lineTo(3+(i*5.5), 5); ctx.stroke(); }
-    // Collar between silver and bronze
-    ctx.fillStyle = '#444'; ctx.beginPath(); ctx.roundRect(-3, -3, 4, 6, 1); ctx.fill();
+    for(let i = 0; i < 2; i++) { ctx.beginPath(); ctx.moveTo(14+(i*5), -5); ctx.lineTo(14+(i*5), 5); ctx.stroke(); }
     // Barrel-flight collar
     ctx.fillStyle = '#444'; ctx.beginPath(); ctx.roundRect(-28, -2.5, 4, 5, 1); ctx.fill();
     // Needle tip
     let ng = ctx.createLinearGradient(0, -2, 0, 2);
     ng.addColorStop(0, '#bbb'); ng.addColorStop(0.5, '#fff'); ng.addColorStop(1, '#bbb');
     ctx.fillStyle = ng; ctx.beginPath(); ctx.moveTo(23, -2.5); ctx.lineTo(23, 2.5); ctx.lineTo(42, 0); ctx.closePath(); ctx.fill();
-    // Chrome highlight on silver half
+    // Chrome highlight on silver section
     ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(-24, -2.2); ctx.lineTo(-2, -2.2); ctx.stroke();
-    // Chrome highlight on bronze half
+    ctx.beginPath(); ctx.moveTo(-24, -2.2); ctx.lineTo(6, -2.2); ctx.stroke();
+    // Chrome highlight on bronze section
     ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 0.8;
     ctx.beginPath(); ctx.moveTo(0, -2.2); ctx.lineTo(22, -2.2); ctx.stroke();
     ctx.restore();
