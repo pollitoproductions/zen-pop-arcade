@@ -2928,12 +2928,13 @@ const DART_DRAW = {
     // Drop shadow
     ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 6;
     // Flights — standard rounded dart fins with yin-yang art
-    // Define fin paths as functions for reuse
+    // Define fin paths as functions for reuse (cut corners at rear)
     function topFin(c) {
       c.beginPath();
       c.moveTo(-25, 0);
       c.lineTo(-30, -3);
-      c.bezierCurveTo(-38, -14, -52, -15, -50, -3);
+      c.bezierCurveTo(-38, -14, -50, -15, -50, -7);
+      c.lineTo(-48, -3);
       c.lineTo(-48, 0);
       c.closePath();
     }
@@ -2941,7 +2942,8 @@ const DART_DRAW = {
       c.beginPath();
       c.moveTo(-25, 0);
       c.lineTo(-30, 3);
-      c.bezierCurveTo(-38, 14, -52, 15, -50, 3);
+      c.bezierCurveTo(-38, 14, -50, 15, -50, 7);
+      c.lineTo(-48, 3);
       c.lineTo(-48, 0);
       c.closePath();
     }
