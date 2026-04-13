@@ -2847,42 +2847,41 @@ const DART_DRAW = {
 
   tuningfork: function(ctx, x, y, angle) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-    // Vibration shimmer trails
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    // Shimmer trails on tines
     ctx.globalAlpha = 0.1;
     for(let i = 1; i <= 4; i++) {
-      ctx.strokeStyle = 'rgba(180,190,255,0.8)'; ctx.lineWidth = 2.5 - i * 0.4;
-      const oy = i * 3;
-      ctx.beginPath(); ctx.moveTo(2, -16 - oy); ctx.lineTo(2, 4 - oy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(14, -16 - oy); ctx.lineTo(14, 4 - oy); ctx.stroke();
+      ctx.strokeStyle = 'rgba(180,190,255,0.9)'; ctx.lineWidth = 2.5 - i * 0.4;
+      const ox = i * 4;
+      ctx.beginPath(); ctx.moveTo(9 + ox, -9); ctx.lineTo(28 + ox, -9); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(9 + ox, 9); ctx.lineTo(28 + ox,  9); ctx.stroke();
     }
     ctx.globalAlpha = 1.0;
     ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 5;
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    // Silver gradient for metal
+    // Metal gradient
     let mg = ctx.createLinearGradient(0, -4, 0, 4);
     mg.addColorStop(0, '#888'); mg.addColorStop(0.3, '#ddd'); mg.addColorStop(0.5, '#fff'); mg.addColorStop(0.7, '#ddd'); mg.addColorStop(1, '#888');
-    // Handle (long rod, left side)
+    // Handle
     ctx.fillStyle = mg;
-    ctx.beginPath(); ctx.roundRect(-22, -3, 30, 6, 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(-22, -3, 31, 6, 2); ctx.fill();
     ctx.shadowColor = 'transparent';
-    // Stem connecting handle to tines
+    // T crossbar
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(8, 10); ctx.stroke();
-    // Two parallel tines going forward (up in rotated space)
-    ctx.lineWidth = 3.5;
-    ctx.strokeStyle = '#bbb';
-    ctx.beginPath(); ctx.moveTo(2, 10); ctx.lineTo(2, -18); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(14, 10); ctx.lineTo(14, -18); ctx.stroke();
-    // U-curve connecting the tine tips
-    ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.moveTo(9, -11); ctx.lineTo(9, 11); ctx.stroke();
+    // Top tine (parallel to handle, going right)
+    ctx.lineWidth = 3.5; ctx.strokeStyle = '#bbb';
+    ctx.beginPath(); ctx.moveTo(9, -9); ctx.lineTo(30, -9); ctx.stroke();
+    // Bottom tine
+    ctx.beginPath(); ctx.moveTo(9, 9); ctx.lineTo(30, 9); ctx.stroke();
+    // U-curve connecting tips
     ctx.beginPath();
-    ctx.moveTo(2, -18);
-    ctx.bezierCurveTo(2, -23, 14, -23, 14, -18);
+    ctx.moveTo(30, -9);
+    ctx.bezierCurveTo(36, -9, 36, 9, 30, 9);
     ctx.stroke();
-    // Highlights on tines
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(1, 8); ctx.lineTo(1, -17); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(13, 8); ctx.lineTo(13, -17); ctx.stroke();
+    // Highlights
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(-20, -1.5); ctx.lineTo(8, -1.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10, -7.5); ctx.lineTo(29, -7.5); ctx.stroke();
     ctx.restore();
   },
 
