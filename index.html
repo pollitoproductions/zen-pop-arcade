@@ -1571,7 +1571,7 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayMsg = document.getElementById('overlay-msg');
 
 // --- SENSITIVITY ---
-const SENSITIVITY_MAP = { 1: 0.20, 2: 0.35, 3: 0.55, 4: 0.75, 5: 1.0 };
+const SENSITIVITY_MAP = { 1: 0.28, 2: 0.35, 3: 0.55, 4: 0.75, 5: 1.0 };
 let currentSensitivity = 3;
 
 let width, height;
@@ -2807,28 +2807,41 @@ const DART_DRAW = {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
     ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 7; ctx.shadowOffsetY = 4;
     // Colorful gradient body
-    let pg = ctx.createLinearGradient(-22, -17, 24, 18);
-    pg.addColorStop(0, '#ff4b2b'); pg.addColorStop(0.25, '#ff9a00'); pg.addColorStop(0.5, '#ffd200');
-    pg.addColorStop(0.75, '#38ef7d'); pg.addColorStop(1, '#667eea');
+    let pg = ctx.createLinearGradient(-14, -15, 18, 15);
+    pg.addColorStop(0, '#667eea'); pg.addColorStop(0.3, '#38ef7d'); pg.addColorStop(0.55, '#ffd200');
+    pg.addColorStop(0.75, '#ff9a00'); pg.addColorStop(1, '#ff4b2b');
     ctx.fillStyle = pg;
+    // Proper rounded-triangle guitar pick shape, tip pointing right
     ctx.beginPath();
-    ctx.moveTo(24, 0); ctx.bezierCurveTo(12, -17, -18, -17, -22, -2);
-    ctx.bezierCurveTo(-24, 10, -10, 18, 2, 18);
-    ctx.bezierCurveTo(14, 18, 24, 10, 24, 0); ctx.fill();
+    ctx.moveTo(18, 0);
+    ctx.bezierCurveTo(16, -10, 2, -18, -10, -14);
+    ctx.bezierCurveTo(-20, -10, -20, 10, -10, 14);
+    ctx.bezierCurveTo(2, 18, 16, 10, 18, 0);
+    ctx.closePath();
+    ctx.fill();
     ctx.shadowColor = 'transparent';
     // Glossy sheen
-    ctx.save(); ctx.globalAlpha = 0.35;
-    let ps = ctx.createRadialGradient(0, -8, 0, 0, -2, 18);
-    ps.addColorStop(0, '#fff'); ps.addColorStop(0.5, 'rgba(255,255,255,0.15)'); ps.addColorStop(1, 'transparent');
+    ctx.save(); ctx.globalAlpha = 0.4;
+    let ps = ctx.createRadialGradient(-4, -8, 0, -2, -4, 14);
+    ps.addColorStop(0, '#fff'); ps.addColorStop(0.5, 'rgba(255,255,255,0.1)'); ps.addColorStop(1, 'transparent');
     ctx.fillStyle = ps;
-    ctx.beginPath(); ctx.ellipse(0, -5, 14, 10, -0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(18, 0);
+    ctx.bezierCurveTo(16, -10, 2, -18, -10, -14);
+    ctx.bezierCurveTo(-20, -10, -20, 10, -10, 14);
+    ctx.bezierCurveTo(2, 18, 16, 10, 18, 0);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
     // Border outline
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(24, 0); ctx.bezierCurveTo(12, -17, -18, -17, -22, -2);
-    ctx.bezierCurveTo(-24, 10, -10, 18, 2, 18);
-    ctx.bezierCurveTo(14, 18, 24, 10, 24, 0); ctx.stroke();
+    ctx.moveTo(18, 0);
+    ctx.bezierCurveTo(16, -10, 2, -18, -10, -14);
+    ctx.bezierCurveTo(-20, -10, -20, 10, -10, 14);
+    ctx.bezierCurveTo(2, 18, 16, 10, 18, 0);
+    ctx.closePath();
+    ctx.stroke();
     ctx.restore();
   },
 
