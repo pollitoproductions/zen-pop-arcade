@@ -1749,34 +1749,86 @@ mainBtn.addEventListener('click', () => {
 });
 
 // --- REWARDED AD GATE ---
+
 let customizeUnlocked = false;
 let adReady = false;
+let androidVersionOk = false;
 const videoSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>';
 const paletteSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10a2.5 2.5 0 002.5-2.5c0-.61-.23-1.21-.64-1.67A.528.528 0 0113.5 17c0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-8.5-10-8.5zm-5.5 9a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3-4a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3 4a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>';
 const clockSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>';
 
 function updateCustomizeBtn() {
+  // Android-only and version >=9
+  if (!androidVersionOk) {
+    customizeBtn.innerHTML = videoSvg + ' CUSTOMIZE';
+    customizeBtn.style.background = 'linear-gradient(135deg, #555, #333)';
+    customizeBtn.disabled = true;
+    customizeBtn.style.opacity = '0.7';
+    customizeBtn.title = 'Customize is only available on Android app version 9 or higher.';
+    return;
+  }
   if (customizeUnlocked) {
     customizeBtn.innerHTML = paletteSvg + ' CUSTOMIZE';
     customizeBtn.style.background = 'linear-gradient(135deg, #11998e, #38ef7d)';
     customizeBtn.disabled = false;
     customizeBtn.style.opacity = '1';
+    customizeBtn.title = '';
   } else if (!adReady && typeof Android !== 'undefined') {
     customizeBtn.innerHTML = clockSvg + ' AD LOADING...';
     customizeBtn.style.background = 'linear-gradient(135deg, #555, #333)';
     customizeBtn.disabled = true;
     customizeBtn.style.opacity = '0.7';
+    customizeBtn.title = '';
   } else {
     customizeBtn.innerHTML = videoSvg + ' CUSTOMIZE';
     customizeBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
     customizeBtn.disabled = false;
     customizeBtn.style.opacity = '1';
+    customizeBtn.title = '';
   }
 }
 
+// Android/version check logic
+function checkAndroidVersion() {
+  androidVersionOk = false;
+  if (typeof Android !== 'undefined' && Android.getAppVersion) {
+    let version = 0;
+    try {
+      version = parseInt(Android.getAppVersion(), 10);
+    } catch (e) { version = 0; }
+    if (!isNaN(version) && version >= 9) {
+      androidVersionOk = true;
+    }
+  }
+  updateCustomizeBtn();
+}
+
+// On page load, check Android/version
+if (typeof Android !== 'undefined' && Android.getAppVersion) {
+  checkAndroidVersion();
+} else {
+  androidVersionOk = false;
+  updateCustomizeBtn();
+}
+
+// Listen for Android interface becoming available (for WebView async injection)
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    if (typeof Android !== 'undefined' && Android.getAppVersion) {
+      checkAndroidVersion();
+    }
+  }, 200);
+});
+
 // --- CUSTOMIZE MODAL ---
+
 customizeBtn.addEventListener('click', (e) => {
   e.stopPropagation();
+  // Block if not Android or version <9
+  if (!androidVersionOk) {
+    alert('Customize is only available on Android app version 9 or higher.');
+    return;
+  }
   if (customizeUnlocked) {
     customizeModal.classList.add('open');
     return;
@@ -1785,9 +1837,10 @@ customizeBtn.addEventListener('click', (e) => {
     customizeBtn.innerHTML = videoSvg + ' LOADING...';
     Android.showRewardedAd();
   } else {
-    customizeUnlocked = true;
-    updateCustomizeBtn();
-    customizeModal.classList.add('open');
+    // Should not happen, but fallback disables on web
+    customizeBtn.disabled = true;
+    customizeBtn.title = 'Customize is only available on Android app version 9 or higher.';
+    alert('Customize is only available on Android app version 9 or higher.');
   }
 });
 
