@@ -1,0 +1,66 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.pollitoproductions.zenpoparcade'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.pollitoproductions.zenpoparcade"
+        minSdk 24
+        targetSdk 35
+        versionCode 9
+        versionName "1.0.9"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "munklins"
+            keyAlias System.getenv("KEY_ALIAS") ?: "android"
+            keyPassword System.getenv("KEY_PASSWORD") ?: "munklins"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        viewBinding false
+    }
+}
+
+dependencies {
+    // Android Core
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.activity:activity:1.9.3'
+
+    // Material Design
+    implementation 'com.google.android.material:material:1.10.0'
+
+    // Google Mobile Ads (AdMob)
+    implementation 'com.google.android.gms:play-services-ads:22.6.0'
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
