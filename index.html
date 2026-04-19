@@ -2442,7 +2442,8 @@ function showGameOver() {
   gameRunning = false;
   Sound.win();
   Sound.stopMusic();
-  if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
+  // Stronger vibration pattern
+  if(navigator.vibrate) navigator.vibrate([120, 100, 120, 100, 120]);
   overlayTitle.innerText = "CLEARED!";
   overlayMsg.innerText = `You popped all ${totalBalloons} balloons in ${throwCount} throws.`;
   mainBtn.innerText = "PLAY AGAIN";
@@ -2541,7 +2542,7 @@ function update(dt) {
         poppedCount++;
         poppedEl.innerText = poppedCount;
         Sound.pop();
-        if(navigator.vibrate) navigator.vibrate(15); 
+        if(navigator.vibrate) navigator.vibrate(60); // Stronger pop vibration
         if(activeCount <= 0) setTimeout(showGameOver, 500); 
       }
     }
