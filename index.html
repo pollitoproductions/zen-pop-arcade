@@ -15,7 +15,7 @@
     -webkit-user-select: none;
   }
   
-  canvas { display: block; }
+  canvas { display: block; will-change: transform; }
 
   #ui {
     position: absolute;
@@ -410,7 +410,23 @@
     font-size: 22px;
     margin: 0;
     text-shadow: 0 0 10px rgba(255, 75, 43, 0.6);
+    flex: 1; text-align: center;
   }
+
+  .back-btn {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    font-size: 18px; font-weight: bold;
+    cursor: pointer;
+    transition: background 0.15s;
+    outline: none;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.3); }
 
   #close-theme-btn {
     background: rgba(255,255,255,0.1);
@@ -590,6 +606,7 @@
     font-size: 20px;
     margin: 0;
     text-shadow: 0 0 10px rgba(255, 75, 43, 0.6);
+    flex: 1; text-align: center;
   }
 
   #close-sound-btn {
@@ -705,7 +722,7 @@
   <h2 id="overlay-title">Zen Pop Arcade</h2>
   <p id="overlay-msg">Drag and release anywhere to throw.</p>
   <button class="btn" id="main-btn">TAP TO PLAY</button>
-  <button class="btn" id="customize-btn" style="background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 15px;">CUSTOMIZE</button>
+  <button class="btn" id="customize-btn" style="background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 15px; display: inline-flex; align-items: center; gap: 8px;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg> CUSTOMIZE</button>
   <button class="btn" id="settings-btn" style="background: linear-gradient(135deg, #a0a0a0, #606060); margin-top: 10px;">SETTINGS</button>
   <div class="copyright">&copy; Pollito Productions 2026</div>
 </div>
@@ -760,6 +777,15 @@
         </div>
       </div>
       <div class="setting-group">
+        <div class="toggle-row">
+          <label>Vibration</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="vibration-toggle" checked>
+            <span class="toggle-slider"></span>
+          </div>
+        </div>
+      </div>
+      <div class="setting-group">
         <label>Throw Sensitivity</label>
         <div class="sensitivity-levels" id="sensitivity-levels">
           <button class="sensitivity-btn" data-level="1">1</button>
@@ -776,6 +802,7 @@
 <div id="dart-modal">
   <div class="sound-modal-content">
     <div class="sound-modal-header">
+      <button class="back-btn" id="back-dart-btn">&#x2190;</button>
       <h3>Dart Skin</h3>
       <button id="close-dart-btn">&#x2715;</button>
     </div>
@@ -786,6 +813,7 @@
 <div id="sound-modal">
   <div class="sound-modal-content">
     <div class="sound-modal-header">
+      <button class="back-btn" id="back-sound-btn">&#x2190;</button>
       <h3>Pop Sound</h3>
       <button id="close-sound-btn">&#x2715;</button>
     </div>
@@ -796,6 +824,7 @@
 <div id="theme-modal">
   <div class="theme-modal-content">
     <div class="theme-modal-header">
+      <button class="back-btn" id="back-theme-btn">&#x2190;</button>
       <h3>Select Theme</h3>
       <button id="close-theme-btn">&#x2715;</button>
     </div>
@@ -1303,7 +1332,7 @@ const THEMES = {
       return bg;
     },
     balloonStyle: (b, ctx) => {
-      let grad = ctx.createRadialGradient(b.x - b.r*0.25, b.y - b.r*0.25, b.r*0.1, b.x, b.y, b.r);
+      let grad = ctx.createRadialGradient(b.x - b.r*0.25, b.y - b.r*0.25, b.r*0.08, b.x, b.y, b.r);
       grad.addColorStop(0, 'rgba(180,255,250,0.45)');
       grad.addColorStop(0.3, 'rgba(64,224,208,0.35)');
       grad.addColorStop(0.7, 'rgba(0,180,180,0.2)');
@@ -1719,10 +1748,100 @@ mainBtn.addEventListener('click', () => {
   });
 });
 
+// --- REWARDED AD GATE ---
+
+let customizeUnlocked = false;
+let adReady = false;
+let androidVersionOk = false;
+const videoSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>';
+const paletteSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10a2.5 2.5 0 002.5-2.5c0-.61-.23-1.21-.64-1.67A.528.528 0 0113.5 17c0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-8.5-10-8.5zm-5.5 9a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3-4a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3 4a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>';
+const clockSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>';
+
+function updateCustomizeBtn() {
+  // Android-only and version >=9
+  if (!androidVersionOk) {
+    customizeBtn.innerHTML = videoSvg + ' CUSTOMIZE';
+    customizeBtn.style.background = 'linear-gradient(135deg, #555, #333)';
+    customizeBtn.disabled = true;
+    customizeBtn.style.opacity = '0.7';
+    customizeBtn.title = 'Customize is only available on Android app version 9 or higher.';
+    return;
+  }
+  if (customizeUnlocked) {
+    customizeBtn.innerHTML = paletteSvg + ' CUSTOMIZE';
+    customizeBtn.style.background = 'linear-gradient(135deg, #11998e, #38ef7d)';
+    customizeBtn.disabled = false;
+    customizeBtn.style.opacity = '1';
+    customizeBtn.title = '';
+  } else if (!adReady && typeof Android !== 'undefined') {
+    customizeBtn.innerHTML = clockSvg + ' AD LOADING...';
+    customizeBtn.style.background = 'linear-gradient(135deg, #555, #333)';
+    customizeBtn.disabled = true;
+    customizeBtn.style.opacity = '0.7';
+    customizeBtn.title = '';
+  } else {
+    customizeBtn.innerHTML = videoSvg + ' CUSTOMIZE';
+    customizeBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+    customizeBtn.disabled = false;
+    customizeBtn.style.opacity = '1';
+    customizeBtn.title = '';
+  }
+}
+
+// Android/version check logic
+function checkAndroidVersion() {
+  androidVersionOk = false;
+  if (typeof Android !== 'undefined' && Android.getAppVersion) {
+    let version = 0;
+    try {
+      version = parseInt(Android.getAppVersion(), 10);
+    } catch (e) { version = 0; }
+    if (!isNaN(version) && version >= 9) {
+      androidVersionOk = true;
+    }
+  }
+  updateCustomizeBtn();
+}
+
+// On page load, check Android/version
+if (typeof Android !== 'undefined' && Android.getAppVersion) {
+  checkAndroidVersion();
+} else {
+  androidVersionOk = false;
+  updateCustomizeBtn();
+}
+
+// Listen for Android interface becoming available (for WebView async injection)
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    if (typeof Android !== 'undefined' && Android.getAppVersion) {
+      checkAndroidVersion();
+    }
+  }, 200);
+});
+
 // --- CUSTOMIZE MODAL ---
+
 customizeBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  customizeModal.classList.add('open');
+  // Block if not Android or version <9
+  if (!androidVersionOk) {
+    alert('Customize is only available on Android app version 9 or higher.');
+    return;
+  }
+  if (customizeUnlocked) {
+    customizeModal.classList.add('open');
+    return;
+  }
+  if (typeof Android !== 'undefined' && Android.showRewardedAd) {
+    customizeBtn.innerHTML = videoSvg + ' LOADING...';
+    Android.showRewardedAd();
+  } else {
+    // Should not happen, but fallback disables on web
+    customizeBtn.disabled = true;
+    customizeBtn.title = 'Customize is only available on Android app version 9 or higher.';
+    alert('Customize is only available on Android app version 9 or higher.');
+  }
 });
 
 closeCustomizeBtn.addEventListener('click', (e) => {
@@ -1760,6 +1879,12 @@ musicToggle.addEventListener('change', () => {
 
 popToggle.addEventListener('change', () => {
   Sound.popMuted = !popToggle.checked;
+});
+
+let vibrationEnabled = true;
+const vibrationToggle = document.getElementById('vibration-toggle');
+vibrationToggle.addEventListener('change', () => {
+  vibrationEnabled = vibrationToggle.checked;
 });
 
 sensitivityLevels.addEventListener('click', (e) => {
@@ -1922,29 +2047,68 @@ function drawThemeBalloonPreviewShape(ctx, b, theme) {
     ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.fillRect(b.x - b.r, b.y - b.r, b.r * 2, b.r * 2);
   } else if (shape === 'pebble') {
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
     ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.beginPath();
     ctx.ellipse(b.x, b.y, b.r * 1.1, b.r * 0.82, Math.PI / 7, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.stroke();
+    // Stone highlight
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    const stg = ctx.createRadialGradient(b.x - b.r * 0.2, b.y - b.r * 0.2, 0, b.x, b.y, b.r * 0.9);
+    stg.addColorStop(0, '#fff'); stg.addColorStop(1, 'transparent');
+    ctx.fillStyle = stg;
+    ctx.beginPath(); ctx.ellipse(b.x, b.y, b.r * 0.8, b.r * 0.6, Math.PI / 7, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   } else if (shape === 'vinyl') {
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
     ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+    ctx.restore();
+    // Grooves
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.6;
     for (let ring of [0.35, 0.55, 0.75, 0.9]) {
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r * ring, 0, Math.PI * 2); ctx.stroke();
     }
-    ctx.fillStyle = 'rgba(20,5,5,0.7)';
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.12, 0, Math.PI * 2); ctx.fill();
+    // Label area
+    ctx.fillStyle = 'rgba(212,160,23,0.45)';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.3, 0, Math.PI * 2); ctx.fill();
+    // Center hole
+    ctx.fillStyle = 'rgba(10,5,5,0.8)';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.08, 0, Math.PI * 2); ctx.fill();
+    // Vinyl shine
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    const vg = ctx.createLinearGradient(b.x - b.r, b.y - b.r, b.x + b.r, b.y + b.r);
+    vg.addColorStop(0, 'transparent'); vg.addColorStop(0.4, '#fff'); vg.addColorStop(0.6, '#fff'); vg.addColorStop(1, 'transparent');
+    ctx.fillStyle = vg;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   } else if (shape === 'paper') {
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.12)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
     ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.beginPath();
     ctx.moveTo(b.x, b.y - b.r); ctx.lineTo(b.x + b.r, b.y);
     ctx.lineTo(b.x, b.y + b.r); ctx.lineTo(b.x - b.r, b.y);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.12)'; ctx.lineWidth = 1;
+    ctx.restore();
+    // Fold creases
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 0.8;
     ctx.beginPath(); ctx.moveTo(b.x, b.y - b.r); ctx.lineTo(b.x, b.y + b.r); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(b.x - b.r, b.y); ctx.lineTo(b.x + b.r, b.y); ctx.stroke();
+    // Paper highlight
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y - b.r); ctx.lineTo(b.x + b.r, b.y);
+    ctx.lineTo(b.x, b.y); ctx.closePath(); ctx.fill();
+    ctx.restore();
   } else if (shape === 'maple') {
     // Maple leaf shape
     ctx.fillStyle = theme.balloonStyle(b, ctx);
@@ -2017,888 +2181,9 @@ function drawThemeBalloonPreviewShape(ctx, b, theme) {
     ctx.fill();
   } else if (shape === 'cloud') {
     ctx.fillStyle = theme.balloonStyle(b, ctx);
-    [[0, -0.08, 0.62], [-0.42, 0.1, 0.42], [0.42, 0.1, 0.42], [0, 0.48, 0.38]].forEach(([dx, dy, dr]) => {
-      ctx.beginPath();
-      ctx.arc(b.x + dx * b.r, b.y + dy * b.r, dr * b.r, 0, Math.PI * 2);
-      ctx.fill();
-    });
-  } else if (shape === 'gem') {
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y - b.r);
-    ctx.lineTo(b.x + b.r, b.y - b.r * 0.15);
-    ctx.lineTo(b.x + b.r * 0.55, b.y + b.r);
-    ctx.lineTo(b.x - b.r * 0.55, b.y + b.r);
-    ctx.lineTo(b.x - b.r, b.y - b.r * 0.15);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(220,180,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
-  } else if (shape === 'cog') {
-    const teeth = 8; const innerR = b.r * 0.62;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    for (let i = 0; i < teeth * 2; i++) {
-      const angle = (i * Math.PI) / teeth;
-      const radius = i % 2 === 0 ? b.r : innerR;
-      const px = b.x + radius * Math.cos(angle), py = b.y + radius * Math.sin(angle);
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-    }
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(20,10,0,0.45)';
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.28, 0, Math.PI * 2); ctx.fill();
-  } else if (shape === 'seaglass') {
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, b.r * 0.88, b.r * 1.1, Math.PI / 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 2; ctx.stroke();
-  } else {
-    // Default circle
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function openThemeSelector() {
-  initThemeSelector();
-  themeModal.classList.add('open');
-}
-
-function closeThemeSelector() {
-  themeModal.classList.remove('open');
-}
-
-function selectTheme(themeName) {
-  if (THEMES[themeName]) {
-    currentTheme = themeName;
-    localStorage.setItem('zenPopTheme', themeName);
-    initThemeSelector();
-    // Preview theme music immediately
-    Sound.init();
-    Sound.stopMusic();
-    if (!Sound.muted && !Sound.musicMuted) {
-      Sound.startLoungeMusic();
-    }
-  }
-}
-
-// --- POP SOUND DATA ---
-const POP_SOUNDS = [
-  { key: 'balloon',   name: 'Balloon Pop',          category: 'Musical & Lounge', desc: 'The classic' },
-  { key: 'marimba',  name: 'Marimba Pluck',         category: 'Musical & Lounge', desc: 'Hollow, woody, tropical' },
-  { key: 'boop',     name: 'Lo-Fi Synth Boop',      category: 'Musical & Lounge', desc: 'Muffled, warm, retro' },
-  { key: 'cymbal',   name: 'Jazz Cymbal Tap',        category: 'Musical & Lounge', desc: 'Crisp ride bell ping' },
-  { key: 'piano',    name: 'Staccato Piano Chord',   category: 'Musical & Lounge', desc: 'Quick warm jazz chord' },
-  { key: 'thock',    name: 'Keyboard Thock',         category: 'Tactile & ASMR',   desc: 'Deep creamy keyboard click' },
-  { key: 'cork',     name: 'Cork Pop',               category: 'Tactile & ASMR',   desc: 'Rounded wine cork thwump' },
-  { key: 'billiard', name: 'Billiard Ball Clack',    category: 'Tactile & ASMR',   desc: 'Heavy resinous smack' },
-  { key: 'bubblewrap', name: 'Bubble Wrap Snap',     category: 'Tactile & ASMR',   desc: 'Light plastic snap' },
-  { key: 'waterdrop', name: 'Cave Water Drop',       category: 'Organic & Nature',  desc: 'Hollow bloop echo' },
-  { key: 'bamboo',   name: 'Bamboo Knock',           category: 'Organic & Nature',  desc: 'Hollow wood tock' },
-  { key: 'leaf',     name: 'Crisp Leaf Crunch',      category: 'Organic & Nature',  desc: 'Perfect autumn crumble' },
-  { key: 'ice',      name: 'Ice Cube Crack',         category: 'Organic & Nature',  desc: 'Sharp glass fracture' },
-];
-
-function initSoundPicker() {
-  let html = '';
-  POP_SOUNDS.forEach(s => {
-    const active = s.key === currentPopSound ? ' active' : '';
-    html += `<div class="sound-item${active}" data-key="${s.key}">
-      <span class="sound-item-name">${s.name}</span>
-      <span class="sound-item-desc">${s.desc}</span>
-      <button class="sound-play-btn" data-key="${s.key}" title="Preview">&#9654;</button>
-    </div>`;
-  });
-  soundList.innerHTML = html;
-}
-
-function openSoundModal() { initSoundPicker(); soundModal.classList.add('open'); }
-function closeSoundModal() { soundModal.classList.remove('open'); }
-
-soundBtn.addEventListener('click', e => { e.stopPropagation(); customizeModal.classList.remove('open'); Sound.init().then(() => openSoundModal()); });
-closeSoundBtn.addEventListener('click', e => { e.stopPropagation(); closeSoundModal(); });
-soundModal.addEventListener('click', e => { if(e.target === soundModal) closeSoundModal(); });
-
-soundList.addEventListener('click', e => {
-  const playBtn = e.target.closest('.sound-play-btn');
-  const item = e.target.closest('.sound-item');
-  if(playBtn) {
-    e.stopPropagation();
-    Sound.init().then(() => {
-      const key = playBtn.getAttribute('data-key');
-      if(Sound.popSounds[key]) Sound.popSounds[key](Sound.ctx, Sound.masterGain);
-    });
-    return;
-  }
-  if(item) {
-    const key = item.getAttribute('data-key');
-    currentPopSound = key;
-    localStorage.setItem('zenPopSound', key);
-    initSoundPicker();
-  }
-});
-
-// Load saved pop sound
-const savedPopSound = localStorage.getItem('zenPopSound');
-if(savedPopSound && Sound.popSounds[savedPopSound]) currentPopSound = savedPopSound;
-
-// --- DART STYLE DATA ---
-const DART_STYLES = [
-  { key: 'pub',        name: 'Pub Dart',         category: 'Musical & Lounge',   desc: 'Classic brass dart with black flights' },
-  { key: 'stylus',     name: 'Vinyl Stylus',      category: 'Musical & Lounge',   desc: 'Shiny silver record needle' },
-  { key: 'pick',       name: 'Guitar Pick',        category: 'Musical & Lounge',   desc: 'Colorful rainbow gradient pick' },
-  { key: 'tuningfork', name: 'Tuning Fork',        category: 'Musical & Lounge',   desc: 'Steel fork with vibrating blur' },
-  { key: 'bamboo',     name: 'Bamboo Skewer',      category: 'Zen & Earthy',       desc: 'Smooth sharpened green bamboo' },
-  { key: 'stone',      name: 'Skipping Stone',     category: 'Zen & Earthy',       desc: 'Flat smooth river rock' },
-  { key: 'sakura',     name: 'Sakura Sprig',       category: 'Zen & Earthy',       desc: 'Cherry blossom branch with petal' },
-  { key: 'pen',        name: 'Fountain Pen Nib',   category: 'Zen & Earthy',       desc: 'Gold nib trailing dissipating ink' },
-  { key: 'paper',      name: 'Paper Airplane',     category: 'Cozy & Tactile',     desc: 'Crisp folded origami dart' },
-  { key: 'spoon',      name: 'Café Spoon',         category: 'Cozy & Tactile',     desc: 'Tiny polished demitasse spoon' },
-  { key: 'prism',      name: 'Glass Prism',        category: 'Cozy & Tactile',     desc: 'Crystal prism with rainbow trail' },
-  { key: 'frost',      name: 'Frost Shard',        category: 'Elemental',          desc: 'Jagged icicle with frosty mist' },
-  { key: 'neon',       name: 'Neon Chevron',       category: 'Elemental',          desc: 'Glowing wireframe arrowhead' },
-  { key: 'star',       name: 'Shooting Star',      category: 'Elemental',          desc: 'Light core trailing cosmic gold dust' },
-];
-
-function drawDartPreview(key, canvas) {
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  ctx.fillStyle = '#111827';
-  ctx.fillRect(0, 0, w, h);
-  if (DART_DRAW[key]) DART_DRAW[key](ctx, w / 2, h / 2, 0);
-}
-
-function initDartPicker() {
-  let html = '';
-  DART_STYLES.forEach(s => {
-    const active = s.key === currentDartStyle ? ' active' : '';
-    html += `<div class="sound-item${active}" data-dart="${s.key}">
-      <canvas class="dart-item-preview" id="dart-prev-${s.key}" width="90" height="36"></canvas>
-      <div class="dart-item-text">
-        <span class="sound-item-name">${s.name}</span>
-        <span class="sound-item-desc">${s.desc}</span>
-      </div>
-    </div>`;
-  });
-  dartList.innerHTML = html;
-  DART_STYLES.forEach(s => {
-    const canvas = document.getElementById(`dart-prev-${s.key}`);
-    if (canvas) drawDartPreview(s.key, canvas);
-  });
-}
-
-function openDartModal() { initDartPicker(); dartModal.classList.add('open'); }
-function closeDartModal() { dartModal.classList.remove('open'); }
-
-dartBtn.addEventListener('click', e => { e.stopPropagation(); customizeModal.classList.remove('open'); openDartModal(); });
-closeDartBtn.addEventListener('click', e => { e.stopPropagation(); closeDartModal(); });
-dartModal.addEventListener('click', e => { if(e.target === dartModal) closeDartModal(); });
-
-dartList.addEventListener('click', e => {
-  const item = e.target.closest('.sound-item');
-  if(item) {
-    currentDartStyle = item.getAttribute('data-dart');
-    localStorage.setItem('zenDartStyle', currentDartStyle);
-    initDartPicker();
-  }
-});
-
-// Load saved dart style
-const savedDartStyle = localStorage.getItem('zenDartStyle');
-if(savedDartStyle && DART_STYLES.some(s => s.key === savedDartStyle)) currentDartStyle = savedDartStyle;
-
-// Load saved theme
-const savedTheme = localStorage.getItem('zenPopTheme');
-if (savedTheme && THEMES[savedTheme]) {
-  currentTheme = savedTheme;
-}
-
-// Initialize theme selector UI
-initThemeSelector();
-
-// Close theme modal when clicking outside
-themeModal.addEventListener('click', (e) => {
-  if (e.target === themeModal) {
-    closeThemeSelector();
-  }
-});
-
-restartIconBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); 
-    Sound.init().then(() => startGame());
-});
-
-menuBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  menuConfirm.style.display = 'flex';
-});
-
-menuConfirmYes.addEventListener('click', (e) => {
-  e.stopPropagation();
-  menuConfirm.style.display = 'none';
-  gameRunning = false;
-  Sound.stopMusic();
-  Sound.startLoungeMusic();
-  overlayTitle.innerText = 'Zen Pop Arcade';
-  overlayMsg.innerText = 'Drag and release anywhere to throw.';
-  mainBtn.innerText = 'TAP TO PLAY';
-  overlay.style.display = 'flex';
-});
-
-menuConfirmNo.addEventListener('click', (e) => {
-  e.stopPropagation();
-  menuConfirm.style.display = 'none';
-});
-
-resetBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  resetDartPos();
-});
-
-muteBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isMuted = Sound.toggleMute();
-    if(isMuted) {
-        muteIcon.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73 4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
-    } else {
-        muteIcon.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
-    }
-});
-
-function resize() {
-  width = window.innerWidth;
-  height = window.innerHeight;
-  canvas.width = width;
-  canvas.height = height;
-  
-  if (gameRunning && balloons.length > 0) {
-    reflowBalloons();
-    if(dart.state === 'idle') {
-      dart.x = Math.min(100, width * 0.15);
-      dart.y = height - 50;
-    }
-  }
-}
-window.addEventListener('resize', resize);
-
-function startGame() {
-  overlay.style.display = 'none';
-  themeModal.classList.remove('open');
-  soundModal.classList.remove('open');
-  dartModal.classList.remove('open');
-  gameRunning = true;
-  poppedCount = 0;
-  throwCount = 0;
-  balloons = [];
-  poppedEl.innerText = '0';
-  throwsEl.innerText = '0';
-  
-  width = window.innerWidth;
-  height = window.innerHeight;
-  canvas.width = width;
-  canvas.height = height;
-  
-  // Ensure music restarts cleanly with current theme
-  Sound.stopMusic();
-  if (!Sound.muted) {
-    Sound.startLoungeMusic();
-  }
-  
-  spawnBalloons();
-  resetDartPos();
-  requestAnimationFrame(loop);
-}
-
-// --- SMART REFLOW LOGIC (MODIFIED FOR OFFSET LAYOUT) ---
-function reflowBalloons() {
-  const spacing = 50;
-  const vSpacing = 55; // Slightly more vertical space for tails
-  const sideMargin = 40;
-  const cols = Math.max(1, Math.floor((width - (sideMargin * 2)) / spacing));
-  
-  const startX = (width - (cols * spacing)) / 2;
-  const startY = 60;
-
-  balloons.forEach((b, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    
-    // Offset every other row (brick/honeycomb layout)
-    const rowOffset = (row % 2 === 0) ? 0 : (spacing / 2);
-    
-    // Maintain the random jitter from spawn
-    b.x = startX + col * spacing + rowOffset + (spacing/2) + b.jitterX;
-    b.y = startY + row * vSpacing;
-  });
-}
-
-function spawnBalloons() {
-  const safeHeight = height * 0.55; 
-  const spacing = 50; 
-  const vSpacing = 55;
-  
-  let rows = Math.floor(safeHeight / vSpacing);
-  rows = Math.max(3, Math.min(7, rows));
-  
-  const sideMargin = 40; 
-  const cols = Math.floor((width - (sideMargin * 2)) / spacing);
-  const startX = (width - (cols * spacing)) / 2;
-  const startY = 60; 
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (Math.random() > 0.9) continue; 
-      
-      // Offset every other row
-      const rowOffset = (r % 2 === 0) ? 0 : (spacing / 2);
-      
-      // Add random jitter so columns aren't straight lines
-      const jitterX = (Math.random() * 14) - 7;
-      
-      balloons.push({
-        x: startX + c * spacing + rowOffset + (spacing/2) + jitterX,
-        y: startY + r * vSpacing,
-        jitterX: jitterX, // Store jitter for resize reflow
-        r: 22,
-        hue: Math.floor(Math.random() * 360),
-        active: true,
-        vx: (Math.random() - 0.5) * CONFIG.balloonSpeed,
-        vy: (Math.random() - 0.5) * CONFIG.balloonSpeed
-      });
-    }
-  }
-  if(balloons.length === 0) balloons.push({x: width/2, y: 100, jitterX:0, r: 22, hue: 0, active:true, vx:0, vy:0});
-  
-  totalBalloons = balloons.length;
-  activeCount = balloons.length;
-}
-
-function resetDartPos() {
-  dart.x = Math.min(100, width * 0.15); 
-  dart.y = height - 50; 
-  dart.vx = 0; dart.vy = 0;
-  dart.angle = -Math.PI / 4;
-  dart.state = 'idle';
-  resetBtn.style.display = 'none'; 
-}
-
-function showGameOver() {
-  gameRunning = false;
-  Sound.win();
-  Sound.stopMusic();
-  if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
-  overlayTitle.innerText = "CLEARED!";
-  overlayMsg.innerText = `You popped all ${totalBalloons} balloons in ${throwCount} throws.`;
-  mainBtn.innerText = "PLAY AGAIN";
-  overlay.style.display = 'flex';
-}
-
-// --- INPUT ---
-function getPoint(e) {
-  const r = canvas.getBoundingClientRect();
-  const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
-  return { x: (t ? t.clientX : e.clientX) - r.left, y: (t ? t.clientY : e.clientY) - r.top };
-}
-
-function inputStart(e) {
-  if(e.target === restartIconBtn || e.target === muteBtn || e.target === resetBtn || e.target === menuBtn ||
-     muteBtn.contains(e.target) || restartIconBtn.contains(e.target) || menuBtn.contains(e.target)) return;
-     
-  if (!gameRunning || dart.state !== 'idle') return;
-  if(e.cancelable) e.preventDefault();
-  input.active = true;
-  const p = getPoint(e);
-  input.startX = p.x; input.startY = p.y;
-  input.currX = p.x; input.currY = p.y;
-  input.time = Date.now();
-}
-
-function inputMove(e) {
-  if (!input.active) return;
-  if(e.cancelable) e.preventDefault();
-  const p = getPoint(e);
-  input.currX = p.x; input.currY = p.y;
-}
-
-function inputEnd(e) {
-  if (!input.active) return;
-  if(e.cancelable) e.preventDefault();
-  input.active = false;
-  
-  const dt = Date.now() - input.time;
-  const dx = input.currX - input.startX;
-  const dy = input.currY - input.startY;
-  
-  if (dt < 30 || Math.hypot(dx, dy) < 15) return;
-
-  throwCount++;
-  throwsEl.innerText = throwCount;
-
-  let vx = dx / dt * 25 * CONFIG.forceMulti;
-  let vy = dy / dt * 25 * CONFIG.forceMulti;
-  if (vx > 0 && vy > -5) vy -= 5;
-
-  const speed = Math.hypot(vx, vy);
-  if (speed > CONFIG.maxSpeed) {
-    const r = CONFIG.maxSpeed / speed;
-    vx *= r; vy *= r;
-  }
-  dart.vx = vx; dart.vy = vy;
-  dart.state = 'flying';
-  Sound.throw();
-}
-
-['mousedown','touchstart'].forEach(ev => canvas.addEventListener(ev, inputStart, {passive:false}));
-['mousemove','touchmove'].forEach(ev => window.addEventListener(ev, inputMove, {passive:false}));
-['mouseup','touchend'].forEach(ev => window.addEventListener(ev, inputEnd, {passive:false}));
-
-// --- GAME LOGIC ---
-function update(dt) {
-  if (dart.state === 'flying') {
-    dart.x += dart.vx * dt; 
-    dart.y += dart.vy * dt;
-    dart.vy += CONFIG.gravity * dt;
-    dart.vx *= Math.pow(CONFIG.drag, dt); 
-    dart.vy *= Math.pow(CONFIG.drag, dt);
-    dart.angle = Math.atan2(dart.vy, dart.vx);
-
-    if(Math.abs(dart.vx) < 0.1 && Math.abs(dart.vy) < 0.1) {
-        dart.state = 'stuck'; 
-        resetBtn.style.display = 'block'; 
-    }
-
-    if (dart.x < -50 || dart.x > width + 50 || dart.y > height + 50) {
-      dart.state = 'landed';
-      setTimeout(resetDartPos, 200);
-    }
-
-    const tipX = dart.x + Math.cos(dart.angle) * 20;
-    const tipY = dart.y + Math.sin(dart.angle) * 20;
-
-    for (let b of balloons) {
-      if (!b.active) continue;
-      const dist = Math.hypot(tipX - b.x, tipY - b.y);
-      if (dist < b.r + 7) {
-        b.active = false;
-        activeCount--;
-        createPop(b.x, b.y, b.hue);
-        poppedCount++;
-        poppedEl.innerText = poppedCount;
-        Sound.pop();
-        if(navigator.vibrate) navigator.vibrate(15); 
-        if(activeCount <= 0) setTimeout(showGameOver, 500); 
-      }
-    }
-  }
-
-  const remainingPct = activeCount / totalBalloons;
-  if (remainingPct <= 0.10 && activeCount > 0) {
-    for (let b of balloons) {
-      if (!b.active) continue;
-      b.x += b.vx * dt; 
-      b.y += b.vy * dt;
-      if (b.x < b.r) { b.x = b.r; b.vx *= -1; }
-      if (b.x > width - b.r) { b.x = width - b.r; b.vx *= -1; }
-      if (b.y < b.r) { b.y = b.r; b.vy *= -1; }
-      if (b.y > height - b.r) { b.y = height - b.r; b.vy *= -1; }
-    }
-  }
-
-  for (let i = particles.length - 1; i >= 0; i--) {
-    let p = particles[i];
-    p.x += p.vx * dt; p.y += p.vy * dt;
-    p.vy += 0.15 * dt; p.life -= 0.02 * dt;
-    if (p.life <= 0) particles.splice(i, 1);
-  }
-}
-
-function createPop(x, y, hue) {
-  const theme = THEMES[currentTheme];
-  const particleType = theme.particles || 'default';
-  
-  let particleCount = 12;
-  if (particleType === 'none') particleCount = 0;
-  else if (particleType === 'ripple') particleCount = 8;
-  else if (particleType === 'shatter') particleCount = 16;
-  
-  for (let i = 0; i < particleCount; i++) {
-    let s;
-    if (particleType === 'ripple') {
-      s = 1 + i * 0.5; // Slow expanding ripples
-    } else {
-      s = Math.random() * 5 + 2;
-    }
-    
-    particles.push({
-      x: x, y: y,
-      vx: Math.cos(Math.random() * 6.28) * s, 
-      vy: Math.sin(Math.random() * 6.28) * s,
-      hue: hue, 
-      life: 1.0,
-      type: particleType
-    });
-  }
-}
-
-function drawBalloon(b) {
-  const theme = THEMES[currentTheme];
-  const shape = theme.targetShape;
-  
-  ctx.save();
-
-  // Draw Tail/String (only for real balloons)
-  if (shape === 'circle') {
-    ctx.strokeStyle = theme.stringColor;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y + b.r + 6);
-    ctx.bezierCurveTo(
-      b.x + 8, b.y + b.r + 15,
-      b.x - 8, b.y + b.r + 35,
-      b.x, b.y + b.r + 48
-    );
-    ctx.stroke();
-  }
-
-  // Ambient glow behind shapes
-  if (shape !== 'wireframe' && shape !== 'square') {
-    ctx.save();
-    ctx.globalAlpha = 0.15;
-    ctx.shadowColor = theme.balloonStyle(b, ctx) || 'rgba(255,255,255,0.3)';
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.shadowBlur = b.r * 0.7;
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.6, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  }
-
-  // Draw based on shape
-  if (shape === 'petal') {
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, b.r, b.r * 1.3, Math.PI / 4, 0, Math.PI * 2);
-    ctx.fill();
-    // Soft petal highlight
-    ctx.save();
-    ctx.globalAlpha = 0.25;
-    const ph = ctx.createRadialGradient(b.x - b.r * 0.25, b.y - b.r * 0.35, 0, b.x, b.y, b.r);
-    ph.addColorStop(0, '#fff'); ph.addColorStop(1, 'transparent');
-    ctx.fillStyle = ph;
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, b.r * 0.85, b.r * 1.1, Math.PI / 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  } else if (shape === 'bubble') {
-    // Outer ring glow
-    ctx.save();
-    ctx.shadowColor = 'rgba(255,255,255,0.25)'; ctx.shadowBlur = 8;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    // Specular highlight
-    ctx.save();
-    ctx.globalAlpha = 0.45;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.ellipse(b.x - b.r * 0.28, b.y - b.r * 0.28, b.r * 0.22, b.r * 0.12, -0.7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  } else if (shape === 'star') {
-    const points = 5;
-    const outerRadius = b.r;
-    const innerRadius = b.r * 0.4;
-    // Glow behind star
-    ctx.save();
-    ctx.shadowColor = 'rgba(255,200,0,0.35)'; ctx.shadowBlur = 12;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    for (let i = 0; i < points * 2; i++) {
-      const radius = i % 2 === 0 ? outerRadius : innerRadius;
-      const angle = (i * Math.PI) / points - Math.PI / 2;
-      const x = b.x + radius * Math.cos(angle);
-      const y = b.y + radius * Math.sin(angle);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-    // Inner bright highlight
-    ctx.save();
-    ctx.globalAlpha = 0.3;
-    const sg = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * 0.5);
-    sg.addColorStop(0, '#fff'); sg.addColorStop(1, 'transparent');
-    ctx.fillStyle = sg;
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.5, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  } else if (shape === 'icecube') {
-    // Ice cube — rounded square with icy highlights and cracks
-    ctx.save();
-    ctx.shadowColor = 'rgba(130,200,230,0.3)'; ctx.shadowBlur = 10;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath(); ctx.roundRect(b.x - b.r, b.y - b.r, b.r * 2, b.r * 2, 4); ctx.fill();
-    ctx.restore();
-    // Frosted edge highlight (top-left)
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(b.x - b.r + 4, b.y - b.r); ctx.lineTo(b.x + b.r - 4, b.y - b.r); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(b.x - b.r, b.y - b.r + 4); ctx.lineTo(b.x - b.r, b.y + b.r - 4); ctx.stroke();
-    // Internal crack lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(b.x - b.r * 0.5, b.y - b.r * 0.6); ctx.lineTo(b.x + b.r * 0.2, b.y + b.r * 0.1); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(b.x + b.r * 0.3, b.y - b.r * 0.4); ctx.lineTo(b.x - b.r * 0.1, b.y + b.r * 0.6); ctx.stroke();
-    // Bright corner gleam
-    ctx.save(); ctx.globalAlpha = 0.25;
-    const icg = ctx.createRadialGradient(b.x - b.r * 0.5, b.y - b.r * 0.5, 0, b.x - b.r * 0.5, b.y - b.r * 0.5, b.r * 0.6);
-    icg.addColorStop(0, '#fff'); icg.addColorStop(1, 'transparent');
-    ctx.fillStyle = icg;
-    ctx.beginPath(); ctx.arc(b.x - b.r * 0.5, b.y - b.r * 0.5, b.r * 0.6, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  } else if (shape === 'crystal') {
-    ctx.save();
-    ctx.shadowColor = 'rgba(130,200,230,0.3)'; ctx.shadowBlur = 10;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3;
-      const x = b.x + b.r * Math.cos(angle);
-      const y = b.y + b.r * Math.sin(angle);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-    // Internal facet lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + b.r * Math.cos(0), b.y + b.r * Math.sin(0)); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + b.r * Math.cos(Math.PI * 2 / 3), b.y + b.r * Math.sin(Math.PI * 2 / 3)); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + b.r * Math.cos(Math.PI * 4 / 3), b.y + b.r * Math.sin(Math.PI * 4 / 3)); ctx.stroke();
-    // Bright edge
-    ctx.strokeStyle = 'rgba(220,240,255,0.3)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(b.x + b.r * Math.cos(0), b.y + b.r * Math.sin(0));
-    ctx.lineTo(b.x + b.r * Math.cos(Math.PI / 3), b.y + b.r * Math.sin(Math.PI / 3)); ctx.stroke();
-  } else if (shape === 'square') {
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    const s = b.r * 2;
-    ctx.beginPath(); ctx.roundRect(b.x - b.r, b.y - b.r, s, s, 3); ctx.fill();
-    // Subtle top highlight
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    const sqg = ctx.createLinearGradient(b.x, b.y - b.r, b.x, b.y);
-    sqg.addColorStop(0, '#fff'); sqg.addColorStop(1, 'transparent');
-    ctx.fillStyle = sqg;
-    ctx.beginPath(); ctx.roundRect(b.x - b.r, b.y - b.r, s, s, 3); ctx.fill();
-    ctx.restore();
-  } else if (shape === 'pebble') {
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y, b.r * 1.1, b.r * 0.82, Math.PI / 7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.stroke();
-    // Stone highlight
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    const stg = ctx.createRadialGradient(b.x - b.r * 0.2, b.y - b.r * 0.2, 0, b.x, b.y, b.r * 0.9);
-    stg.addColorStop(0, '#fff'); stg.addColorStop(1, 'transparent');
-    ctx.fillStyle = stg;
-    ctx.beginPath(); ctx.ellipse(b.x, b.y, b.r * 0.8, b.r * 0.6, Math.PI / 7, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  } else if (shape === 'vinyl') {
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-    // Grooves
-    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.6;
-    for (let ring of [0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.93]) {
-      ctx.beginPath(); ctx.arc(b.x, b.y, b.r * ring, 0, Math.PI * 2); ctx.stroke();
-    }
-    // Label area
-    ctx.fillStyle = 'rgba(212,160,23,0.45)';
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.3, 0, Math.PI * 2); ctx.fill();
-    // Center hole
-    ctx.fillStyle = 'rgba(10,5,5,0.8)';
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.08, 0, Math.PI * 2); ctx.fill();
-    // Vinyl shine
-    ctx.save();
-    ctx.globalAlpha = 0.08;
-    const vg = ctx.createLinearGradient(b.x - b.r, b.y - b.r, b.x + b.r, b.y + b.r);
-    vg.addColorStop(0, 'transparent'); vg.addColorStop(0.4, '#fff'); vg.addColorStop(0.6, '#fff'); vg.addColorStop(1, 'transparent');
-    ctx.fillStyle = vg;
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  } else if (shape === 'paper') {
-    ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.12)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y - b.r); ctx.lineTo(b.x + b.r, b.y);
-    ctx.lineTo(b.x, b.y + b.r); ctx.lineTo(b.x - b.r, b.y);
-    ctx.closePath(); ctx.fill();
-    ctx.restore();
-    // Fold creases
-    ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(b.x, b.y - b.r); ctx.lineTo(b.x, b.y + b.r); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(b.x - b.r, b.y); ctx.lineTo(b.x + b.r, b.y); ctx.stroke();
-    // Paper highlight
-    ctx.save();
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y - b.r); ctx.lineTo(b.x + b.r, b.y);
-    ctx.lineTo(b.x, b.y); ctx.closePath(); ctx.fill();
-    ctx.restore();
-  } else if (shape === 'maple') {
-    // Maple leaf — game draw
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    const r = b.r;
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y - r);
-    ctx.lineTo(b.x + r*0.15, b.y - r*0.55);
-    ctx.lineTo(b.x + r*0.7, b.y - r*0.65);
-    ctx.lineTo(b.x + r*0.45, b.y - r*0.3);
-    ctx.lineTo(b.x + r*0.95, b.y - r*0.1);
-    ctx.lineTo(b.x + r*0.55, b.y + r*0.1);
-    ctx.lineTo(b.x + r*0.6, b.y + r*0.55);
-    ctx.lineTo(b.x + r*0.25, b.y + r*0.45);
-    ctx.lineTo(b.x + r*0.1, b.y + r*0.9);
-    ctx.lineTo(b.x, b.y + r*0.6);
-    ctx.lineTo(b.x - r*0.1, b.y + r*0.9);
-    ctx.lineTo(b.x - r*0.25, b.y + r*0.45);
-    ctx.lineTo(b.x - r*0.6, b.y + r*0.55);
-    ctx.lineTo(b.x - r*0.55, b.y + r*0.1);
-    ctx.lineTo(b.x - r*0.95, b.y - r*0.1);
-    ctx.lineTo(b.x - r*0.45, b.y - r*0.3);
-    ctx.lineTo(b.x - r*0.7, b.y - r*0.65);
-    ctx.lineTo(b.x - r*0.15, b.y - r*0.55);
-    ctx.closePath();
-    ctx.fill();
-    // Stem
-    ctx.strokeStyle = 'rgba(100,50,10,0.4)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(b.x, b.y + r*0.6); ctx.lineTo(b.x, b.y + r*1.1); ctx.stroke();
-    // Central vein
-    ctx.strokeStyle = 'rgba(80,30,0,0.2)'; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(b.x, b.y - r*0.8); ctx.lineTo(b.x, b.y + r*0.6); ctx.stroke();
-  } else if (shape === 'leaf') {
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y - b.r);
-    ctx.bezierCurveTo(b.x + b.r * 0.9, b.y - b.r * 0.5, b.x + b.r * 0.9, b.y + b.r * 0.5, b.x, b.y + b.r);
-    ctx.bezierCurveTo(b.x - b.r * 0.9, b.y + b.r * 0.5, b.x - b.r * 0.9, b.y - b.r * 0.5, b.x, b.y - b.r);
-    ctx.fill();
-    // Central vein
-    ctx.strokeStyle = 'rgba(30,80,20,0.3)'; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(b.x, b.y - b.r * 0.9); ctx.lineTo(b.x, b.y + b.r * 0.9); ctx.stroke();
-    // Side veins
-    ctx.strokeStyle = 'rgba(30,80,20,0.18)'; ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(b.x, b.y - b.r * 0.3); ctx.quadraticCurveTo(b.x + b.r * 0.5, b.y - b.r * 0.4, b.x + b.r * 0.7, b.y - b.r * 0.15); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(b.x, b.y - b.r * 0.3); ctx.quadraticCurveTo(b.x - b.r * 0.5, b.y - b.r * 0.4, b.x - b.r * 0.7, b.y - b.r * 0.15); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(b.x, b.y + b.r * 0.2); ctx.quadraticCurveTo(b.x + b.r * 0.4, b.y + b.r * 0.15, b.x + b.r * 0.65, b.y + b.r * 0.35); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(b.x, b.y + b.r * 0.2); ctx.quadraticCurveTo(b.x - b.r * 0.4, b.y + b.r * 0.15, b.x - b.r * 0.65, b.y + b.r * 0.35); ctx.stroke();
-    // Leaf shimmer
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    const lg = ctx.createRadialGradient(b.x - b.r * 0.2, b.y - b.r * 0.25, 0, b.x, b.y, b.r * 0.7);
-    lg.addColorStop(0, '#fff'); lg.addColorStop(1, 'transparent');
-    ctx.fillStyle = lg;
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.5, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  } else if (shape === 'wireframe') {
-    const sides = 5;
-    ctx.save();
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    for (let i = 0; i < sides; i++) {
-      const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
-      const px = b.x + b.r * Math.cos(angle), py = b.y + b.r * Math.sin(angle);
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-    }
-    ctx.closePath(); ctx.fill();
-    // Outer neon glow
-    ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 14;
-    ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2.5; ctx.stroke();
-    // Inner hex glow
-    ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 10;
-    ctx.strokeStyle = '#ff00ff'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.55;
-    ctx.beginPath();
-    for (let i = 0; i < sides; i++) {
-      const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
-      const px = b.x + b.r * 0.45 * Math.cos(angle), py = b.y + b.r * 0.45 * Math.sin(angle);
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-    }
-    ctx.closePath(); ctx.stroke();
-    // Bright center dot
-    ctx.shadowColor = '#fff'; ctx.shadowBlur = 6;
-    ctx.globalAlpha = 0.4;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(b.x, b.y, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1; ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
-    ctx.restore();
-  } else if (shape === 'hexagon') {
-    ctx.save();
-    ctx.shadowColor = 'rgba(255,180,0,0.3)'; ctx.shadowBlur = 8;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3 - Math.PI / 6;
-      const px = b.x + b.r * Math.cos(angle);
-      const py = b.y + b.r * Math.sin(angle);
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-    // Wax cell edge
-    ctx.strokeStyle = 'rgba(120, 70, 0, 0.6)'; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (i * Math.PI) / 3 - Math.PI / 6;
-      const px = b.x + b.r * Math.cos(angle);
-      const py = b.y + b.r * Math.sin(angle);
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-    }
-    ctx.closePath(); ctx.stroke();
-    // Honey highlight
-    ctx.save();
-    ctx.globalAlpha = 0.2;
-    const hg = ctx.createRadialGradient(b.x - b.r * 0.15, b.y - b.r * 0.2, 0, b.x, b.y, b.r * 0.5);
-    hg.addColorStop(0, '#fff'); hg.addColorStop(1, 'transparent');
-    ctx.fillStyle = hg;
-    ctx.beginPath(); ctx.arc(b.x - b.r * 0.1, b.y - b.r * 0.15, b.r * 0.35, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-  } else if (shape === 'drop') {
-    ctx.save();
-    ctx.shadowColor = 'rgba(255,180,0,0.25)'; ctx.shadowBlur = 8;
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y - b.r);
-    ctx.bezierCurveTo(b.x + b.r, b.y - b.r * 0.3, b.x + b.r * 0.8, b.y + b.r * 0.5, b.x, b.y + b.r);
-    ctx.bezierCurveTo(b.x - b.r * 0.8, b.y + b.r * 0.5, b.x - b.r, b.y - b.r * 0.3, b.x, b.y - b.r);
-    ctx.fill();
-    ctx.restore();
-    ctx.strokeStyle = 'rgba(255,220,80,0.3)'; ctx.lineWidth = 1.2; ctx.stroke();
-    // Honey highlight
-    ctx.save();
-    ctx.globalAlpha = 0.2;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.ellipse(b.x - b.r * 0.2, b.y - b.r * 0.1, b.r * 0.2, b.r * 0.1, -0.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  } else if (shape === 'cloud') {
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.save();
     ctx.shadowColor = 'rgba(200,220,255,0.5)'; ctx.shadowBlur = 10;
-    [[0, -0.15, 0.58], [-0.38, 0.12, 0.4], [0.38, 0.12, 0.4], [0, 0.4, 0.35], [-0.2, -0.05, 0.48], [0.2, -0.05, 0.48]].forEach(([dx, dy, dr]) => {
+    [[0, -0.08, 0.62], [-0.42, 0.1, 0.42], [0.42, 0.1, 0.42], [0, 0.48, 0.38]].forEach(([dx, dy, dr]) => {
       ctx.beginPath();
       ctx.arc(b.x + dx * b.r, b.y + dy * b.r, dr * b.r, 0, Math.PI * 2);
       ctx.fill();
@@ -3483,11 +2768,16 @@ const DART_DRAW = {
 };
 
 
+
+let _bgCache = null, _bgCacheTheme = '', _bgCacheW = 0, _bgCacheH = 0;
 function draw() {
   const theme = THEMES[currentTheme];
-  
-  // Draw background using theme gradient
-  ctx.fillStyle = theme.bgGradient(ctx, width, height);
+  // Cache background gradient — no need to recreate every frame
+  if (!_bgCache || _bgCacheTheme !== currentTheme || _bgCacheW !== width || _bgCacheH !== height) {
+    _bgCache = theme.bgGradient(ctx, width, height);
+    _bgCacheTheme = currentTheme; _bgCacheW = width; _bgCacheH = height;
+  }
+  ctx.fillStyle = _bgCache;
   ctx.fillRect(0, 0, width, height);
 
   // --- DRAWING OFF-SCREEN INDICATOR ---
@@ -3544,6 +2834,25 @@ function loop(timestamp) {
   update(speedFactor);
   draw();
   requestAnimationFrame(loop);
+}
+
+// --- AD CALLBACKS (called from Android native) ---
+function onAdRewarded(data) {
+  customizeUnlocked = true;
+  updateCustomizeBtn();
+  customizeModal.classList.add('open');
+}
+
+function onAdClosed(data) {
+  if (!customizeUnlocked) {
+    adReady = false;
+    updateCustomizeBtn();
+  }
+}
+
+function onAdReady(data) {
+  adReady = true;
+  updateCustomizeBtn();
 }
 </script>
 </body>
