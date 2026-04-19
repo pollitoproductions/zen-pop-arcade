@@ -760,6 +760,15 @@
         </div>
       </div>
       <div class="setting-group">
+        <div class="toggle-row">
+          <label>Vibration</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="vibration-toggle" checked>
+            <span class="toggle-slider"></span>
+          </div>
+        </div>
+      </div>
+      <div class="setting-group">
         <label>Throw Sensitivity</label>
         <div class="sensitivity-levels" id="sensitivity-levels">
           <button class="sensitivity-btn" data-level="1">1</button>
@@ -1788,6 +1797,12 @@ popToggle.addEventListener('change', () => {
   Sound.popMuted = !popToggle.checked;
 });
 
+let vibrationEnabled = true;
+const vibrationToggle = document.getElementById('vibration-toggle');
+vibrationToggle.addEventListener('change', () => {
+  vibrationEnabled = vibrationToggle.checked;
+});
+
 sensitivityLevels.addEventListener('click', (e) => {
   const btn = e.target.closest('.sensitivity-btn');
   if (!btn) return;
@@ -2313,6 +2328,8 @@ function startGame() {
   themeModal.classList.remove('open');
   soundModal.classList.remove('open');
   dartModal.classList.remove('open');
+  currentTheme = 'default';
+  currentDartStyle = 'pub';
   gameRunning = true;
   poppedCount = 0;
   throwCount = 0;
@@ -2413,7 +2430,7 @@ function showGameOver() {
   gameRunning = false;
   Sound.win();
   Sound.stopMusic();
-  if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
+  if(navigator.vibrate && vibrationEnabled) navigator.vibrate([50, 50, 50]);
   overlayTitle.innerText = "CLEARED!";
   overlayMsg.innerText = `You popped all ${totalBalloons} balloons in ${throwCount} throws.`;
   mainBtn.innerText = "PLAY AGAIN";
@@ -2512,7 +2529,7 @@ function update(dt) {
         poppedCount++;
         poppedEl.innerText = poppedCount;
         Sound.pop();
-        if(navigator.vibrate) navigator.vibrate(15); 
+        if(navigator.vibrate && vibrationEnabled) navigator.vibrate(15); 
         if(activeCount <= 0) setTimeout(showGameOver, 500); 
       }
     }
