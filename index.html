@@ -704,8 +704,8 @@
 <div id="overlay">
   <h2 id="overlay-title">Zen Pop Arcade</h2>
   <p id="overlay-msg">Drag and release anywhere to throw.</p>
-  <button class="btn" id="main-btn">TAP TO PLAY</button>
-  <button class="btn" id="customize-btn" style="background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 15px; display: inline-flex; align-items: center; gap: 8px;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg> CUSTOMIZE</button>
+  <button class="btn" id="main-btn" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">TAP TO PLAY</button>
+  <button class="btn" id="customize-btn" style="background: linear-gradient(135deg, #2196f3, #0a84ff); margin-top: 15px; display: inline-flex; align-items: center; gap: 8px;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg> CUSTOMIZE</button>
   <button class="btn" id="settings-btn" style="background: linear-gradient(135deg, #a0a0a0, #606060); margin-top: 10px;">SETTINGS</button>
   <div class="copyright">&copy; Pollito Productions 2026</div>
 </div>
@@ -1733,10 +1733,10 @@ const paletteSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:
 function updateCustomizeBtn() {
   if (customizeUnlocked) {
     customizeBtn.innerHTML = paletteSvg + ' CUSTOMIZE';
-    customizeBtn.style.background = 'linear-gradient(135deg, #11998e, #38ef7d)';
+    customizeBtn.style.background = 'linear-gradient(135deg, #2196f3, #0a84ff)';
   } else {
     customizeBtn.innerHTML = videoSvg + ' CUSTOMIZE';
-    customizeBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+    customizeBtn.style.background = 'linear-gradient(135deg, #2196f3, #0a84ff)';
   }
 }
 
