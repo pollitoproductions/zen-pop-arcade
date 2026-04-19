@@ -2187,9 +2187,9 @@ soundList.addEventListener('click', e => {
   }
 });
 
-// Load saved pop sound
-const savedPopSound = localStorage.getItem('zenPopSound');
-if(savedPopSound && Sound.popSounds[savedPopSound]) currentPopSound = savedPopSound;
+// Disabled: Always start with default pop sound
+// const savedPopSound = localStorage.getItem('zenPopSound');
+// if(savedPopSound && Sound.popSounds[savedPopSound]) currentPopSound = savedPopSound;
 
 // --- DART STYLE DATA ---
 const DART_STYLES = [
@@ -2259,15 +2259,15 @@ dartList.addEventListener('click', e => {
   }
 });
 
-// Load saved dart style
-const savedDartStyle = localStorage.getItem('zenDartStyle');
-if(savedDartStyle && DART_STYLES.some(s => s.key === savedDartStyle)) currentDartStyle = savedDartStyle;
+// Disabled: Always start with default dart style
+// const savedDartStyle = localStorage.getItem('zenDartStyle');
+// if(savedDartStyle && DART_STYLES.some(s => s.key === savedDartStyle)) currentDartStyle = savedDartStyle;
 
-// Load saved theme
-const savedTheme = localStorage.getItem('zenPopTheme');
-if (savedTheme && THEMES[savedTheme]) {
-  currentTheme = savedTheme;
-}
+// Disabled: Always start with default theme
+// const savedTheme = localStorage.getItem('zenPopTheme');
+// if (savedTheme && THEMES[savedTheme]) {
+//   currentTheme = savedTheme;
+// }
 
 // Initialize theme selector UI
 initThemeSelector();
