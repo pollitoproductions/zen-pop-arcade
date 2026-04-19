@@ -705,7 +705,7 @@
   <h2 id="overlay-title">Zen Pop Arcade</h2>
   <p id="overlay-msg">Drag and release anywhere to throw.</p>
   <button class="btn" id="main-btn">TAP TO PLAY</button>
-  <button class="btn" id="customize-btn" style="background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 15px;">CUSTOMIZE</button>
+  <button class="btn" id="customize-btn" style="background: linear-gradient(135deg, #667eea, #764ba2); margin-top: 15px; display: inline-flex; align-items: center; gap: 8px;"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg> CUSTOMIZE</button>
   <button class="btn" id="settings-btn" style="background: linear-gradient(135deg, #a0a0a0, #606060); margin-top: 10px;">SETTINGS</button>
   <div class="copyright">&copy; Pollito Productions 2026</div>
 </div>
@@ -1719,10 +1719,36 @@ mainBtn.addEventListener('click', () => {
   });
 });
 
+// --- REWARDED AD GATE ---
+let customizeUnlocked = false;
+const videoSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>';
+const paletteSvg = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10a2.5 2.5 0 002.5-2.5c0-.61-.23-1.21-.64-1.67A.528.528 0 0113.5 17c0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-8.5-10-8.5zm-5.5 9a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3-4a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3 4a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/></svg>';
+
+function updateCustomizeBtn() {
+  if (customizeUnlocked) {
+    customizeBtn.innerHTML = paletteSvg + ' CUSTOMIZE';
+    customizeBtn.style.background = 'linear-gradient(135deg, #11998e, #38ef7d)';
+  } else {
+    customizeBtn.innerHTML = videoSvg + ' CUSTOMIZE';
+    customizeBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+  }
+}
+
 // --- CUSTOMIZE MODAL ---
 customizeBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  customizeModal.classList.add('open');
+  if (customizeUnlocked) {
+    customizeModal.classList.add('open');
+    return;
+  }
+  if (typeof Android !== 'undefined' && Android.showRewardedAd) {
+    customizeBtn.innerHTML = videoSvg + ' LOADING...';
+    Android.showRewardedAd();
+  } else {
+    customizeUnlocked = true;
+    updateCustomizeBtn();
+    customizeModal.classList.add('open');
+  }
 });
 
 closeCustomizeBtn.addEventListener('click', (e) => {
@@ -3545,6 +3571,19 @@ function loop(timestamp) {
   draw();
   requestAnimationFrame(loop);
 }
+
+// --- AD CALLBACKS (called from Android native) ---
+function onAdRewarded(data) {
+  customizeUnlocked = true;
+  updateCustomizeBtn();
+  customizeModal.classList.add('open');
+}
+
+function onAdClosed(data) {
+  if (!customizeUnlocked) updateCustomizeBtn();
+}
+
+function onAdReady(data) {}
 </script>
 </body>
 </html>
