@@ -1742,11 +1742,25 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('beforeunload', () => Sound.killAudio());
 
 // --- INIT & RESIZE ---
+
 mainBtn.addEventListener('click', () => {
   Sound.init().then(() => {
     startGame();
   });
 });
+
+// --- RESTORE startGame FUNCTION ---
+function startGame() {
+  // Hide overlay and start/reset game state
+  overlay.classList.add('hidden');
+  gameRunning = true;
+  // Optionally reset stats, balloons, etc. if needed
+  // Example: poppedCount = 0; throwCount = 0; update UI if needed
+  // You may want to call your own game reset/init logic here
+  // If you have a game loop, start it:
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
+}
 
 // --- REWARDED AD GATE ---
 
