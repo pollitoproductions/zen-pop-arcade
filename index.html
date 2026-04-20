@@ -720,6 +720,22 @@
   </div>
 </div>
 
+<!-- Custom Ad Confirm Modal -->
+<div id="customize-ad-modal">
+  <div class="customize-modal-content" style="max-width:340px;">
+    <div class="customize-modal-header">
+      <h3>Customize</h3>
+      <button id="close-customize-ad-btn">&#x2715;</button>
+    </div>
+    <div class="customize-body" style="gap:18px;align-items:center;">
+      <p style="color:#fff;font-size:18px;margin:0 0 10px 0;">Watch an ad to customize your experience?</p>
+      <div style="display:flex;gap:18px;justify-content:center;width:100%;">
+        <button class="btn" id="customize-ad-yes" style="padding:10px 28px;">Yes</button>
+        <button class="btn" id="customize-ad-no" style="background:rgba(255,255,255,0.1);color:#fff;padding:10px 28px;">No</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="customize-modal">
   <div class="customize-modal-content">
     <div class="customize-modal-header">
@@ -1759,12 +1775,39 @@ function updateCustomizeBtn() {
 }
 
 // --- CUSTOMIZE MODAL ---
+
+// --- Custom Ad Confirm Modal Logic ---
+const customizeAdModal = document.getElementById('customize-ad-modal');
+const customizeAdYes = document.getElementById('customize-ad-yes');
+const customizeAdNo = document.getElementById('customize-ad-no');
+const closeCustomizeAdBtn = document.getElementById('close-customize-ad-btn');
+
 customizeBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   if (customizeUnlocked) {
     customizeModal.classList.add('open');
     return;
   }
+  // Show the ad confirm modal
+  customizeAdModal.classList.add('open');
+});
+
+function closeAdModal() {
+  customizeAdModal.classList.remove('open');
+}
+
+customizeAdNo.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeAdModal();
+});
+closeCustomizeAdBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeAdModal();
+});
+customizeAdYes.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeAdModal();
+  // Continue with ad logic
   if (typeof Android !== 'undefined' && Android.showRewardedAd) {
     customizeBtn.innerHTML = videoSvg + ' LOADING...';
     Android.showRewardedAd();
