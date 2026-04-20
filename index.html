@@ -721,7 +721,7 @@
 </div>
 
 <!-- Custom Ad Confirm Modal -->
-<div id="customize-ad-modal" style="display:none;">
+<div id="customize-ad-modal" style="display:none;z-index:301;position:fixed;inset:0;align-items:center;justify-content:center;">
   <div class="customize-modal-content" style="max-width:340px;">
     <div class="customize-modal-header">
       <h3>Customize</h3>
@@ -1782,19 +1782,34 @@ const customizeAdYes = document.getElementById('customize-ad-yes');
 const customizeAdNo = document.getElementById('customize-ad-no');
 const closeCustomizeAdBtn = document.getElementById('close-customize-ad-btn');
 
+
 customizeBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  if (customizeUnlocked) {
-    customizeModal.classList.add('open');
-    return;
+  // Only show if overlay (home screen) is visible
+  if (overlay && overlay.style.display !== 'none') {
+    if (customizeUnlocked) {
+      customizeModal.classList.add('open');
+      return;
+    }
+    customizeAdModal.style.display = 'flex';
+    customizeAdModal.focus && customizeAdModal.focus();
   }
-  // Show the ad confirm modal
-  customizeAdModal.style.display = 'flex';
 });
 
 function closeAdModal() {
   customizeAdModal.style.display = 'none';
 }
+
+// Hide ad modal if overlay is hidden (game started)
+function hideAdModalIfNotHome() {
+  if (overlay && overlay.style.display === 'none') {
+    customizeAdModal.style.display = 'none';
+  }
+}
+mainBtn.addEventListener('click', hideAdModalIfNotHome);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAdModal();
+});
 
 customizeAdNo.addEventListener('click', (e) => {
   e.stopPropagation();
