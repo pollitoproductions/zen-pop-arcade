@@ -2149,23 +2149,11 @@ function drawThemeBalloonPreviewShape(ctx, b, theme) {
     ctx.fill();
   } else if (shape === 'cloud') {
     ctx.fillStyle = theme.balloonStyle(b, ctx);
-    const cloudParts = [[0, -0.08, 0.62], [-0.42, 0.1, 0.42], [0.42, 0.1, 0.42], [0, 0.48, 0.38]];
-    // Draw filled clouds
-    cloudParts.forEach(([dx, dy, dr]) => {
+    [[0, -0.08, 0.62], [-0.42, 0.1, 0.42], [0.42, 0.1, 0.42], [0, 0.48, 0.38]].forEach(([dx, dy, dr]) => {
       ctx.beginPath();
       ctx.arc(b.x + dx * b.r, b.y + dy * b.r, dr * b.r, 0, Math.PI * 2);
       ctx.fill();
     });
-    // Draw dark blue outline
-    ctx.save();
-    ctx.strokeStyle = '#183a6d'; // dark blue
-    ctx.lineWidth = 2.2;
-    cloudParts.forEach(([dx, dy, dr]) => {
-      ctx.beginPath();
-      ctx.arc(b.x + dx * b.r, b.y + dy * b.r, dr * b.r, 0, Math.PI * 2);
-      ctx.stroke();
-    });
-    ctx.restore();
   } else if (shape === 'gem') {
     ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.beginPath();
@@ -3054,56 +3042,15 @@ function drawBalloon(b) {
     ctx.fill();
     ctx.restore();
   } else if (shape === 'cloud') {
-    // Draw filled cloud (overlapping circles, as before)
     ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.save();
     ctx.shadowColor = 'rgba(200,220,255,0.5)'; ctx.shadowBlur = 10;
-    const cloudParts = [
-      [0, -0.15, 0.58],
-      [-0.38, 0.12, 0.4],
-      [0.38, 0.12, 0.4],
-      [0, 0.4, 0.35],
-      [-0.2, -0.05, 0.48],
-      [0.2, -0.05, 0.48]
-    ];
-    cloudParts.forEach(([dx, dy, dr]) => {
+    [[0, -0.15, 0.58], [-0.38, 0.12, 0.4], [0.38, 0.12, 0.4], [0, 0.4, 0.35], [-0.2, -0.05, 0.48], [0.2, -0.05, 0.48]].forEach(([dx, dy, dr]) => {
       ctx.beginPath();
       ctx.arc(b.x + dx * b.r, b.y + dy * b.r, dr * b.r, 0, Math.PI * 2);
       ctx.fill();
     });
-    ctx.shadowBlur = 0;
-    ctx.restore();
-
-    // Draw only the very outside outline of the cloud as a continuous path
-    ctx.save();
-    ctx.strokeStyle = '#183a6d';
-    ctx.lineWidth = 3.2;
-    ctx.beginPath();
-    // The outline is traced by following the outermost points of the circles in order
-    // This is a hand-tuned path for a smooth cloud outline
-    const cx = b.x, cy = b.y, r = b.r;
-    // Start at top of main circle
-    ctx.moveTo(cx, cy - r * 0.15 - r * 0.58);
-    // Main circle right arc
-    ctx.arc(cx, cy - r * 0.15, r * 0.58, -Math.PI/2, Math.PI/6, false);
-    // Right-most circle upper arc
-    ctx.arc(cx + r * 0.38, cy + r * 0.12, r * 0.4, -5*Math.PI/6, Math.PI/3, false);
-    // Bottom-right circle arc
-    ctx.arc(cx + r * 0.2, cy - r * 0.05, r * 0.48, -Math.PI/3, Math.PI/3, false);
-    // Bottom circle arc
-    ctx.arc(cx, cy + r * 0.4, r * 0.35, -Math.PI/3, Math.PI/3, false);
-    // Bottom-left circle arc
-    ctx.arc(cx - r * 0.2, cy - r * 0.05, r * 0.48, 2*Math.PI/3, Math.PI/3, true);
-    // Left-most circle arc
-    ctx.arc(cx - r * 0.38, cy + r * 0.12, r * 0.4, 2*Math.PI/3, Math.PI, false);
-    // Top-left circle arc
-    ctx.arc(cx - r * 0.2, cy - r * 0.05, r * 0.48, Math.PI, Math.PI/2, true);
-    // Back to main circle
-    ctx.arc(cx, cy - r * 0.15, r * 0.58, Math.PI, -Math.PI/2, true);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.restore();
-
+    ctx.shadowBlur = 0; ctx.restore();
     // Cloud highlight
     ctx.save();
     ctx.globalAlpha = 0.2;
