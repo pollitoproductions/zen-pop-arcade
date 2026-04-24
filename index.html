@@ -3054,15 +3054,62 @@ function drawBalloon(b) {
     ctx.fill();
     ctx.restore();
   } else if (shape === 'cloud') {
+    // Draw filled cloud (overlapping circles)
     ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.save();
     ctx.shadowColor = 'rgba(200,220,255,0.5)'; ctx.shadowBlur = 10;
-    [[0, -0.15, 0.58], [-0.38, 0.12, 0.4], [0.38, 0.12, 0.4], [0, 0.4, 0.35], [-0.2, -0.05, 0.48], [0.2, -0.05, 0.48]].forEach(([dx, dy, dr]) => {
+    const cloudParts = [
+      [0, -0.15, 0.58],
+      [-0.38, 0.12, 0.4],
+      [0.38, 0.12, 0.4],
+      [0, 0.4, 0.35],
+      [-0.2, -0.05, 0.48],
+      [0.2, -0.05, 0.48]
+    ];
+    cloudParts.forEach(([dx, dy, dr]) => {
       ctx.beginPath();
       ctx.arc(b.x + dx * b.r, b.y + dy * b.r, dr * b.r, 0, Math.PI * 2);
       ctx.fill();
     });
-    ctx.shadowBlur = 0; ctx.restore();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // Draw a single continuous dark blue outline around the cloud
+    ctx.save();
+    ctx.strokeStyle = '#183a6d';
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    // Trace the outline as a continuous path
+    // Start at top of main circle
+    const cx = b.x, cy = b.y;
+    const r0 = b.r * 0.58, r1 = b.r * 0.4, r2 = b.r * 0.4, r3 = b.r * 0.35, r4 = b.r * 0.48, r5 = b.r * 0.48;
+    // Centers
+    const c0 = [cx, cy - b.r * 0.15];
+    const c1 = [cx - b.r * 0.38, cy + b.r * 0.12];
+    const c2 = [cx + b.r * 0.38, cy + b.r * 0.12];
+    const c3 = [cx, cy + b.r * 0.4];
+    const c4 = [cx - b.r * 0.2, cy - b.r * 0.05];
+    const c5 = [cx + b.r * 0.2, cy - b.r * 0.05];
+
+    // Outline path: move to top of main circle
+    ctx.moveTo(c0[0], c0[1] - r0);
+    // Main circle right upper arc
+    ctx.arc(c0[0], c0[1], r0, -Math.PI/2, Math.PI/6, false);
+    // Right-most circle upper arc
+    ctx.arc(c2[0], c2[1], r2, -5*Math.PI/6, Math.PI/3, false);
+    // Bottom circle right arc
+    ctx.arc(c3[0], c3[1], r3, -Math.PI/3, Math.PI/3, false);
+    // Left-most circle lower arc
+    ctx.arc(c1[0], c1[1], r1, Math.PI/3, Math.PI, false);
+    // Top-left circle upper arc
+    ctx.arc(c4[0], c4[1], r4, 0, Math.PI, true);
+    // Top-right circle upper arc
+    ctx.arc(c5[0], c5[1], r5, Math.PI, 0, true);
+    // Close path
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+
     // Cloud highlight
     ctx.save();
     ctx.globalAlpha = 0.2;
