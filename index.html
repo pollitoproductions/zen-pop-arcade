@@ -2149,11 +2149,23 @@ function drawThemeBalloonPreviewShape(ctx, b, theme) {
     ctx.fill();
   } else if (shape === 'cloud') {
     ctx.fillStyle = theme.balloonStyle(b, ctx);
-    [[0, -0.08, 0.62], [-0.42, 0.1, 0.42], [0.42, 0.1, 0.42], [0, 0.48, 0.38]].forEach(([dx, dy, dr]) => {
+    const cloudParts = [[0, -0.08, 0.62], [-0.42, 0.1, 0.42], [0.42, 0.1, 0.42], [0, 0.48, 0.38]];
+    // Draw filled clouds
+    cloudParts.forEach(([dx, dy, dr]) => {
       ctx.beginPath();
       ctx.arc(b.x + dx * b.r, b.y + dy * b.r, dr * b.r, 0, Math.PI * 2);
       ctx.fill();
     });
+    // Draw dark blue outline
+    ctx.save();
+    ctx.strokeStyle = '#183a6d'; // dark blue
+    ctx.lineWidth = 2.2;
+    cloudParts.forEach(([dx, dy, dr]) => {
+      ctx.beginPath();
+      ctx.arc(b.x + dx * b.r, b.y + dy * b.r, dr * b.r, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    ctx.restore();
   } else if (shape === 'gem') {
     ctx.fillStyle = theme.balloonStyle(b, ctx);
     ctx.beginPath();
