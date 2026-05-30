@@ -1256,7 +1256,34 @@ const Sound = {
   }
 };
 
-// --- CONFIG ---
+// --- LOW-END DEVICE DETECTION ---
+const _IS_LOW_END = (function() {
+  const mem = navigator.deviceMemory || 0;
+  const cpu = navigator.hardwareConcurrency || 0;
+  const tcl = /TCL/i.test(navigator.userAgent);
+  return tcl || (mem > 0 && mem <= 2) || (cpu > 0 && cpu <= 4);
+})();
+
+// --- CACHED BACKGROUND GRADIENT ---
+// Recreating a RadialGradient every frame is expensive. Cache it and only
+// rebuild when the theme changes or the canvas resizes.
+let _cachedBg = null;
+let _cachedBgTheme = null;
+let _cachedBgW = 0;
+let _cachedBgH = 0;
+function getCachedBg(theme, w, h) {
+  if (_cachedBg && _cachedBgTheme === currentTheme && _cachedBgW === w && _cachedBgH === h) {
+    return _cachedBg;
+  }
+  _cachedBg = theme.bgGradient(ctx, w, h);
+  _cachedBgTheme = currentTheme;
+  _cachedBgW = w; _cachedBgH = h;
+  return _cachedBg;
+}
+
+// Invalidate the cache when theme changes so the new gradient is built on next frame.
+const _origSelectTheme = typeof selectTheme !== 'undefined' ? null : null; // patched below after definition
+
 const CONFIG = {
   gravity: 0.25,
   drag: 0.992,
@@ -2204,6 +2231,7 @@ function closeThemeSelector() {
 function selectTheme(themeName) {
   if (THEMES[themeName]) {
     currentTheme = themeName;
+    _cachedBgTheme = null; // invalidate bg gradient cache
     localStorage.setItem('zenPopTheme', themeName);
     initThemeSelector();
     // Preview theme music immediately
@@ -2664,10 +2692,14 @@ function createPop(x, y, hue) {
   const theme = THEMES[currentTheme];
   const particleType = theme.particles || 'default';
   
-  let particleCount = 12;
+  let particleCount = _IS_LOW_END ? 6 : 12;
   if (particleType === 'none') particleCount = 0;
-  else if (particleType === 'ripple') particleCount = 8;
-  else if (particleType === 'shatter') particleCount = 16;
+  else if (particleType === 'ripple') particleCount = _IS_LOW_END ? 4 : 8;
+  else if (particleType === 'shatter') particleCount = _IS_LOW_END ? 8 : 16;
+
+  // Hard cap: never let the particle array grow too large
+  const MAX_PARTICLES = _IS_LOW_END ? 60 : 200;
+  if (particles.length >= MAX_PARTICLES) return;
   
   for (let i = 0; i < particleCount; i++) {
     let s;
@@ -2708,12 +2740,13 @@ function drawBalloon(b) {
     ctx.stroke();
   }
 
-  // Ambient glow behind shapes
-  if (shape !== 'wireframe' && shape !== 'square') {
+  // Ambient glow behind shapes — skip on low-end (shadowBlur is very expensive)
+  if (!_IS_LOW_END && shape !== 'wireframe' && shape !== 'square') {
     ctx.save();
     ctx.globalAlpha = 0.15;
-    ctx.shadowColor = theme.balloonStyle(b, ctx) || 'rgba(255,255,255,0.3)';
-    ctx.fillStyle = theme.balloonStyle(b, ctx);
+    const _glowStyle = theme.balloonStyle(b, ctx);
+    ctx.shadowColor = _glowStyle;
+    ctx.fillStyle = _glowStyle;
     ctx.shadowBlur = b.r * 0.7;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 0.6, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
@@ -3318,13 +3351,15 @@ const DART_DRAW = {
   tuningfork: function(ctx, x, y, angle) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    // Shimmer trails on tines
-    ctx.globalAlpha = 0.1;
-    for(let i = 1; i <= 4; i++) {
-      ctx.strokeStyle = 'rgba(180,190,255,0.9)'; ctx.lineWidth = 2.5 - i * 0.4;
-      const ox = i * 4;
-      ctx.beginPath(); ctx.moveTo(9 + ox, -5); ctx.lineTo(28 + ox, -5); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(9 + ox, 5); ctx.lineTo(28 + ox,  5); ctx.stroke();
+    // Shimmer trails on tines — skip on low-end
+    if (!_IS_LOW_END) {
+      ctx.globalAlpha = 0.1;
+      for(let i = 1; i <= 4; i++) {
+        ctx.strokeStyle = 'rgba(180,190,255,0.9)'; ctx.lineWidth = 2.5 - i * 0.4;
+        const ox = i * 4;
+        ctx.beginPath(); ctx.moveTo(9 + ox, -5); ctx.lineTo(28 + ox, -5); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(9 + ox, 5); ctx.lineTo(28 + ox,  5); ctx.stroke();
+      }
     }
     ctx.globalAlpha = 1.0;
     ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 5;
@@ -3432,13 +3467,15 @@ const DART_DRAW = {
 
   pen: function(ctx, x, y, angle) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-    // Ink trail with gradient fade
-    for(let i = 1; i <= 6; i++) {
-      ctx.globalAlpha = 0.08 * (7 - i);
-      const ig = ctx.createRadialGradient(-22 - i*7, 0, 0, -22 - i*7, 0, 5 - i*0.5);
-      ig.addColorStop(0, '#1a1a4a'); ig.addColorStop(1, 'transparent');
-      ctx.fillStyle = ig;
-      ctx.beginPath(); ctx.ellipse(-22 - i*7, 0, 5 - i*0.5, 3 - i*0.3, 0, 0, Math.PI*2); ctx.fill();
+    // Ink trail — skip on low-end (6 gradient ellipses per frame is expensive)
+    if (!_IS_LOW_END) {
+      for(let i = 1; i <= 6; i++) {
+        ctx.globalAlpha = 0.08 * (7 - i);
+        const ig = ctx.createRadialGradient(-22 - i*7, 0, 0, -22 - i*7, 0, 5 - i*0.5);
+        ig.addColorStop(0, '#1a1a4a'); ig.addColorStop(1, 'transparent');
+        ctx.fillStyle = ig;
+        ctx.beginPath(); ctx.ellipse(-22 - i*7, 0, 5 - i*0.5, 3 - i*0.3, 0, 0, Math.PI*2); ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
     ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 3;
@@ -3523,18 +3560,20 @@ const DART_DRAW = {
 
   prism: function(ctx, x, y, angle) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-    // Rainbow dispersion trail
-    const rainbow = [
-      ['rgba(255,30,30,0.3)', 3.5], ['rgba(255,140,0,0.25)', 2],
-      ['rgba(255,255,0,0.25)', 0.5], ['rgba(0,220,0,0.25)', -1],
-      ['rgba(0,80,255,0.25)', -2.5], ['rgba(140,0,255,0.25)', -4]
-    ];
-    rainbow.forEach(([c, yOff], i) => {
-      ctx.fillStyle = c;
-      for(let j = 1; j <= 3; j++) {
-        ctx.beginPath(); ctx.ellipse(-22 - i*5 - j*4, yOff*(1+j*0.3), 5 - j*0.8, 2.5 - j*0.4, 0, 0, Math.PI*2); ctx.fill();
-      }
-    });
+    // Rainbow dispersion trail — skip on low-end (18 gradient ellipses per frame)
+    if (!_IS_LOW_END) {
+      const rainbow = [
+        ['rgba(255,30,30,0.3)', 3.5], ['rgba(255,140,0,0.25)', 2],
+        ['rgba(255,255,0,0.25)', 0.5], ['rgba(0,220,0,0.25)', -1],
+        ['rgba(0,80,255,0.25)', -2.5], ['rgba(140,0,255,0.25)', -4]
+      ];
+      rainbow.forEach(([c, yOff], i) => {
+        ctx.fillStyle = c;
+        for(let j = 1; j <= 3; j++) {
+          ctx.beginPath(); ctx.ellipse(-22 - i*5 - j*4, yOff*(1+j*0.3), 5 - j*0.8, 2.5 - j*0.4, 0, 0, Math.PI*2); ctx.fill();
+        }
+      });
+    }
     // Prism body — glass effect
     ctx.shadowColor = 'rgba(200,220,255,0.3)'; ctx.shadowBlur = 8;
     let prg = ctx.createLinearGradient(0, -16, 0, 16);
@@ -3553,13 +3592,15 @@ const DART_DRAW = {
 
   frost: function(ctx, x, y, angle) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-    // Icy mist trail
-    for(let i = 1; i <= 6; i++) {
-      ctx.globalAlpha = 0.08 * (7 - i);
-      const mg = ctx.createRadialGradient(-14 - i*7, 0, 0, -14 - i*7, 0, 8 - i*0.6);
-      mg.addColorStop(0, '#c0f0ff'); mg.addColorStop(1, 'transparent');
-      ctx.fillStyle = mg;
-      ctx.beginPath(); ctx.ellipse(-14 - i*7, (Math.sin(i * 1.8) * 2), 8 - i*0.6, 4.5 - i*0.4, 0, 0, Math.PI*2); ctx.fill();
+    // Icy mist trail — skip on low-end
+    if (!_IS_LOW_END) {
+      for(let i = 1; i <= 6; i++) {
+        ctx.globalAlpha = 0.08 * (7 - i);
+        const mg = ctx.createRadialGradient(-14 - i*7, 0, 0, -14 - i*7, 0, 8 - i*0.6);
+        mg.addColorStop(0, '#c0f0ff'); mg.addColorStop(1, 'transparent');
+        ctx.fillStyle = mg;
+        ctx.beginPath(); ctx.ellipse(-14 - i*7, (Math.sin(i * 1.8) * 2), 8 - i*0.6, 4.5 - i*0.4, 0, 0, Math.PI*2); ctx.fill();
+      }
     }
     ctx.globalAlpha = 1;
     ctx.shadowColor = 'rgba(160,230,255,0.3)'; ctx.shadowBlur = 8;
@@ -3598,18 +3639,19 @@ const DART_DRAW = {
 
   star: function(ctx, x, y, angle) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
-    // Gold dust trail with sparkles
-    for(let i = 1; i <= 8; i++) {
-      const alpha = 0.15 * (9 - i);
-      const r = 4.5 - i * 0.4;
-      const sy = Math.sin(i * 1.3) * 6;
-      // Glow
-      ctx.save();
-      ctx.shadowColor = `rgba(255,200,50,${alpha * 0.5})`;
-      ctx.shadowBlur = 4;
-      ctx.fillStyle = `rgba(255,215,80,${alpha})`;
-      ctx.beginPath(); ctx.arc(-10 - i * 7, sy, r, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
+    // Gold dust trail — skip on low-end (8 gradient circles per frame)
+    if (!_IS_LOW_END) {
+      for(let i = 1; i <= 8; i++) {
+        const alpha = 0.15 * (9 - i);
+        const r = 4.5 - i * 0.4;
+        const sy = Math.sin(i * 1.3) * 6;
+        ctx.save();
+        ctx.shadowColor = `rgba(255,200,50,${alpha * 0.5})`;
+        ctx.shadowBlur = 4;
+        ctx.fillStyle = `rgba(255,215,80,${alpha})`;
+        ctx.beginPath(); ctx.arc(-10 - i * 7, sy, r, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
     }
     // Outer glow halo
     const og = ctx.createRadialGradient(8, 0, 0, 8, 0, 24);
@@ -3633,9 +3675,17 @@ const DART_DRAW = {
 function draw() {
   const theme = THEMES[currentTheme];
   
-  // Draw background using theme gradient
-  ctx.fillStyle = theme.bgGradient(ctx, width, height);
+  // Use cached background gradient — only rebuilds on resize or theme change
+  ctx.fillStyle = getCachedBg(theme, width, height);
   ctx.fillRect(0, 0, width, height);
+
+  // On low-end devices, disable all shadow effects globally for this frame.
+  // shadowBlur causes GPU pipeline flushes that are the #1 cause of freezing.
+  if (_IS_LOW_END) {
+    Object.defineProperty(ctx, 'shadowBlur', { set: function(){}, get: function(){ return 0; }, configurable: true });
+    Object.defineProperty(ctx, 'shadowColor', { set: function(){}, get: function(){ return 'transparent'; }, configurable: true });
+    Object.defineProperty(ctx, 'shadowOffsetY', { set: function(){}, get: function(){ return 0; }, configurable: true });
+  }
 
   // --- DRAWING OFF-SCREEN INDICATOR ---
   if (dart.state === 'flying' && dart.y < -10) {
@@ -3676,6 +3726,13 @@ function draw() {
       ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
       ctx.fill();
     }
+  }
+
+  // Restore shadow properties after low-end override so other canvas work isn't affected
+  if (_IS_LOW_END) {
+    delete ctx.shadowBlur;
+    delete ctx.shadowColor;
+    delete ctx.shadowOffsetY;
   }
 }
 
